@@ -7,251 +7,66 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #ffffff;
-      --bg2: #f5f5f3;
-      --bg3: #efefed;
-      --text: #1a1a1a;
-      --text2: #666660;
-      --text3: #999993;
-      --border: rgba(0,0,0,0.12);
-      --border2: rgba(0,0,0,0.22);
-      --radius: 8px;
-      --radius-lg: 12px;
-      --green-bg: #eaf3de;
-      --green-text: #3b6d11;
-      --red: #a32d2d;
-      --red-bg: #fcebeb;
-      --amber-bg: #faeeda;
-      --amber-text: #633806;
+      --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefed;
+      --text: #1a1a1a; --text2: #666660; --text3: #999993;
+      --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+      --radius: 8px; --radius-lg: 12px;
+      --green-bg: #eaf3de; --green-text: #3b6d11;
+      --red: #a32d2d; --red-bg: #fcebeb;
+      --amber-bg: #faeeda; --amber-text: #633806;
     }
-
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #1e1e1c;
-        --bg2: #272725;
-        --bg3: #2f2f2d;
-        --text: #f0f0ee;
-        --text2: #aaaaaa;
-        --text3: #666660;
-        --border: rgba(255,255,255,0.1);
-        --border2: rgba(255,255,255,0.2);
-        --green-bg: #173404;
-        --green-text: #c0dd97;
-        --red: #f09595;
-        --red-bg: #501313;
-        --amber-bg: #412402;
-        --amber-text: #fac775;
+        --bg: #1e1e1c; --bg2: #272725; --bg3: #2f2f2d;
+        --text: #f0f0ee; --text2: #aaaaaa; --text3: #666660;
+        --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+        --green-bg: #173404; --green-text: #c0dd97;
+        --red: #f09595; --red-bg: #501313;
+        --amber-bg: #412402; --amber-text: #fac775;
       }
     }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg3);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 1.5rem 1rem 3rem;
-    }
-
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding: 1.5rem 1rem 3rem; }
     .container { max-width: 680px; margin: 0 auto; }
-
     h1 { font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
-
-    .topbar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 1rem;
-      align-items: center;
-      flex-wrap: wrap;
-      background: var(--bg);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 12px 14px;
-    }
-
+    .topbar { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; }
     .topbar-group { display: flex; align-items: center; gap: 6px; }
     .topbar label { font-size: 12px; color: var(--text2); }
-    .topbar input {
-      font-family: inherit;
-      font-size: 13px;
-      padding: 5px 9px;
-      border-radius: var(--radius);
-      border: 0.5px solid var(--border2);
-      background: var(--bg2);
-      color: var(--text);
-    }
-
-    .no-support {
-      background: var(--amber-bg);
-      color: var(--amber-text);
-      border-radius: var(--radius);
-      padding: 10px 14px;
-      font-size: 13px;
-      margin-bottom: 1rem;
-      display: none;
-    }
-
-    .mic-center {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      padding: 1.5rem;
-      background: var(--bg);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      margin-bottom: 1rem;
-    }
-
-    .mic-btn {
-      width: 68px;
-      height: 68px;
-      border-radius: 50%;
-      border: 2px solid var(--border2);
-      background: var(--bg);
-      color: var(--text);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      transition: all 0.15s;
-    }
-
+    .topbar input { font-family: inherit; font-size: 13px; padding: 5px 9px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); }
+    .no-support { background: var(--amber-bg); color: var(--amber-text); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; margin-bottom: 1rem; display: none; }
+    .mic-center { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 1.5rem; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 1rem; }
+    .mic-btn { width: 68px; height: 68px; border-radius: 50%; border: 2px solid var(--border2); background: var(--bg); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 28px; transition: all 0.15s; }
     .mic-btn:hover { background: var(--bg2); }
-    .mic-btn.recording {
-      border-color: var(--red);
-      background: var(--red-bg);
-      color: var(--red);
-      animation: pulse 1.2s ease-in-out infinite;
-    }
-
+    .mic-btn.recording { border-color: var(--red); background: var(--red-bg); color: var(--red); animation: pulse 1.2s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{transform:scale(1);}50%{transform:scale(1.07);} }
-
     .mic-status { font-size: 14px; color: var(--text2); text-align: center; }
     .mic-status.active { color: var(--red); font-weight: 500; }
-    .interim {
-      font-size: 13px;
-      color: var(--text3);
-      font-style: italic;
-      min-height: 18px;
-      text-align: center;
-      max-width: 500px;
-      line-height: 1.5;
-    }
-
-    .cats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 1rem;
-    }
-
+    .interim { font-size: 13px; color: var(--text3); font-style: italic; min-height: 18px; text-align: center; max-width: 500px; line-height: 1.5; }
+    .cats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
     @media (max-width: 480px) { .cats { grid-template-columns: 1fr; } }
-
-    .cat-card {
-      background: var(--bg);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 10px 12px;
-    }
-
+    .cat-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 10px 12px; }
     .cat-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
     .cat-icon { font-size: 16px; color: var(--text2); }
     .cat-name { font-size: 13px; font-weight: 500; color: var(--text); }
-    .cat-count {
-      margin-left: auto;
-      font-size: 11px;
-      padding: 2px 7px;
-      border-radius: 20px;
-      background: var(--bg2);
-      color: var(--text2);
-    }
+    .cat-count { margin-left: auto; font-size: 11px; padding: 2px 7px; border-radius: 20px; background: var(--bg2); color: var(--text2); }
     .cat-count.has { background: var(--green-bg); color: var(--green-text); }
-
     .memo-list { display: flex; flex-direction: column; gap: 5px; }
-    .memo-item {
-      font-size: 12px;
-      color: var(--text2);
-      background: var(--bg2);
-      border-radius: var(--radius);
-      padding: 6px 8px;
-      line-height: 1.5;
-      display: flex;
-      gap: 6px;
-      align-items: flex-start;
-    }
+    .memo-item { font-size: 12px; color: var(--text2); background: var(--bg2); border-radius: var(--radius); padding: 6px 8px; line-height: 1.5; display: flex; gap: 6px; align-items: flex-start; }
     .memo-time { font-size: 11px; color: var(--text3); white-space: nowrap; margin-top: 1px; }
     .memo-del { margin-left: auto; cursor: pointer; color: var(--text3); font-size: 14px; flex-shrink: 0; }
     .memo-del:hover { color: var(--red); }
     .empty-hint { font-size: 12px; color: var(--text3); font-style: italic; }
-
-    .gen-btn {
-      width: 100%;
-      padding: 12px;
-      font-size: 15px;
-      font-weight: 500;
-      border: 0.5px solid var(--border2);
-      border-radius: var(--radius);
-      background: var(--bg);
-      color: var(--text);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.15s;
-      margin-bottom: 1rem;
-      font-family: inherit;
-    }
+    .gen-btn { width: 100%; padding: 12px; font-size: 15px; font-weight: 500; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s; margin-bottom: 1rem; font-family: inherit; }
     .gen-btn:hover { background: var(--bg2); }
     .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    .output-card {
-      background: var(--bg);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1.25rem;
-      display: none;
-    }
-
-    .output-label { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-    .output-txt {
-      font-size: 14px;
-      line-height: 1.8;
-      color: var(--text);
-      white-space: pre-wrap;
-      background: var(--bg2);
-      border-radius: var(--radius);
-      padding: 14px;
-    }
-
+    .output-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; display: none; }
+    .saved-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; background: var(--green-bg); color: var(--green-text); padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; }
+    .output-label { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .output-txt { font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; background: var(--bg2); border-radius: var(--radius); padding: 14px; }
     .btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-    .sm-btn {
-      padding: 8px 14px;
-      font-size: 13px;
-      border: 0.5px solid var(--border2);
-      border-radius: var(--radius);
-      background: var(--bg);
-      color: var(--text2);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.15s;
-      font-family: inherit;
-    }
+    .sm-btn { padding: 8px 14px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s; font-family: inherit; }
     .sm-btn:hover { background: var(--bg2); }
-
-    .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid var(--border2);
-      border-top-color: var(--text);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
+    .spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
@@ -274,9 +89,7 @@
       </div>
     </div>
 
-    <div class="no-support" id="noSupport">
-      Spraakherkenning werkt het best in Chrome (desktop of Android).
-    </div>
+    <div class="no-support" id="noSupport">Spraakherkenning werkt het best in Chrome (desktop of Android).</div>
 
     <div class="mic-center">
       <button class="mic-btn" id="micBtn" onclick="toggleRec()" aria-label="Start memo-opname">
@@ -323,7 +136,10 @@
     </button>
 
     <div class="output-card" id="outputCard">
-      <div class="output-label"><i class="ti ti-file-text"></i> Evaluatie</div>
+      <div class="output-label">
+        <i class="ti ti-file-text"></i> Evaluatie
+        <span class="saved-badge" id="savedBadge" style="display:none;"><i class="ti ti-check"></i> Opgeslagen in Supabase</span>
+      </div>
       <div class="output-txt" id="outputTxt"></div>
       <div class="btn-row">
         <button class="sm-btn" onclick="copyOut()"><i class="ti ti-copy" id="copyIcon"></i><span id="copyTxt">Kopieer</span></button>
@@ -335,13 +151,8 @@
   <script>
     const CATS = ['verloop','algemeen','personeel','dj','lichten','veiligheid','td'];
     const CAT_LABELS = {
-      verloop: 'Verloop van de avond',
-      algemeen: 'Algemeen',
-      personeel: 'Personeel',
-      dj: "DJ's",
-      lichten: 'Lichten (LightJockey)',
-      veiligheid: 'Veiligheid (Beveiliger)',
-      td: 'TD (Technische dienst)'
+      verloop: 'Verloop van de avond', algemeen: 'Algemeen', personeel: 'Personeel',
+      dj: "DJ's", lichten: 'Lichten (LightJockey)', veiligheid: 'Veiligheid (Beveiliger)', td: 'TD (Technische dienst)'
     };
 
     let memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[] };
@@ -355,21 +166,18 @@
       return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
     }
 
-    async function callClaude(body) {
+    async function callClaude(payload, meta, saveToSupabase) {
       const res = await fetch('/.netlify/functions/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ payload, meta: meta || {}, saveToSupabase: !!saveToSupabase })
       });
       return res.json();
     }
 
     function initRec() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) {
-        document.getElementById('noSupport').style.display = 'block';
-        return false;
-      }
+      if (!SR) { document.getElementById('noSupport').style.display = 'block'; return false; }
       recognition = new SR();
       recognition.lang = 'nl-NL';
       recognition.continuous = true;
@@ -384,18 +192,14 @@
         if (final) currentFinal += final;
         document.getElementById('interimTxt').textContent = interim || currentFinal;
       };
-      recognition.onerror = (e) => {
-        document.getElementById('micStatus').textContent = 'Fout: ' + e.error;
-        stopRec(false);
-      };
+      recognition.onerror = (e) => { document.getElementById('micStatus').textContent = 'Fout: ' + e.error; stopRec(false); };
       recognition.onend = () => { if (isRecording) recognition.start(); };
       return true;
     }
 
     function toggleRec() {
       if (!recognition && !initRec()) return;
-      if (isRecording) stopRec(true);
-      else startRec();
+      if (isRecording) stopRec(true); else startRec();
     }
 
     function startRec() {
@@ -448,7 +252,7 @@ Memo: "${tekst}"
 
 Antwoord met ALLEEN de categorienaam.`
           }]
-        });
+        }, null, false);
         let cat = json.content?.[0]?.text?.trim().toLowerCase() || 'algemeen';
         if (!CATS.includes(cat)) cat = 'algemeen';
         addMemo(cat, tekst);
@@ -476,10 +280,7 @@ Antwoord met ALLEEN de categorienaam.`
       const items = memos[cat];
       cnt.textContent = items.length;
       cnt.className = 'cat-count' + (items.length > 0 ? ' has' : '');
-      if (items.length === 0) {
-        list.innerHTML = '<span class="empty-hint">Nog geen memo\'s</span>';
-        return;
-      }
+      if (items.length === 0) { list.innerHTML = '<span class="empty-hint">Nog geen memo\'s</span>'; return; }
       list.innerHTML = items.map(m =>
         `<div class="memo-item">
           <span class="memo-time">${m.tijd}</span>
@@ -510,7 +311,10 @@ Antwoord met ALLEEN de categorienaam.`
       const naam = document.getElementById('naamInput').value.trim() || 'Manager';
 
       let memoTekst = '';
+      const memoMeta = {};
       for (const cat of CATS) {
+        const catTekst = memos[cat].map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
+        memoMeta['memo_' + cat] = catTekst;
         if (memos[cat].length > 0) {
           memoTekst += `\n### ${CAT_LABELS[cat]}\n`;
           memos[cat].forEach(m => { memoTekst += `- [${m.tijd}] ${m.tekst}\n`; });
@@ -554,14 +358,17 @@ Memo's:
 ${memoTekst}`;
 
       try {
+        const meta = { manager: naam, opentijd: open, sluittijd: sluit, ...memoMeta };
         const json = await callClaude({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1500,
           messages: [{ role: 'user', content: prompt }]
-        });
+        }, meta, true);
+
         const output = json.content?.map(b => b.text || '').join('');
         document.getElementById('outputTxt').textContent = output;
         document.getElementById('outputCard').style.display = 'block';
+        document.getElementById('savedBadge').style.display = 'inline-flex';
         document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch(e) {
         alert('Er ging iets mis: ' + e.message);
@@ -578,16 +385,14 @@ ${memoTekst}`;
       navigator.clipboard.writeText(document.getElementById('outputTxt').textContent).then(() => {
         document.getElementById('copyTxt').textContent = 'Gekopieerd!';
         document.getElementById('copyIcon').className = 'ti ti-check';
-        setTimeout(() => {
-          document.getElementById('copyTxt').textContent = 'Kopieer';
-          document.getElementById('copyIcon').className = 'ti ti-copy';
-        }, 2000);
+        setTimeout(() => { document.getElementById('copyTxt').textContent = 'Kopieer'; document.getElementById('copyIcon').className = 'ti ti-copy'; }, 2000);
       });
     }
 
     function resetAll() {
       CATS.forEach(c => { memos[c] = []; renderCat(c); });
       document.getElementById('outputCard').style.display = 'none';
+      document.getElementById('savedBadge').style.display = 'none';
       document.getElementById('outputTxt').textContent = '';
       document.getElementById('micStatus').textContent = 'Druk op de microfoon en spreek een memo in';
       updateGenBtn();
