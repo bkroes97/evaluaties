@@ -31,7 +31,7 @@
     h1 { font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
     .topbar { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; }
     .topbar-group { display: flex; align-items: center; gap: 6px; }
-    .topbar label { font-size: 12px; color: var(--text2); }
+    .topbar-label { font-size: 12px; color: var(--text2); }
     .topbar input { font-family: inherit; font-size: 13px; padding: 5px 9px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); }
     .no-support { background: var(--amber-bg); color: var(--amber-text); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; margin-bottom: 1rem; display: none; }
     .mic-center { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 1.5rem; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 1rem; }
@@ -76,15 +76,15 @@
 
     <div class="topbar">
       <div class="topbar-group">
-        <label>Open:</label>
+        <span class="topbar-label">Open:</span>
         <input type="time" id="openTijd" value="23:00" style="width:90px;" />
       </div>
       <div class="topbar-group">
-        <label>Sluit:</label>
+        <span class="topbar-label">Sluit:</span>
         <input type="time" id="sluitTijd" value="05:00" style="width:90px;" />
       </div>
       <div class="topbar-group" style="flex:1; min-width:140px;">
-        <label>Naam:</label>
+        <span class="topbar-label">Naam:</span>
         <input type="text" id="naamInput" placeholder="Jouw naam" style="flex:1;" />
       </div>
     </div>
@@ -138,7 +138,7 @@
     <div class="output-card" id="outputCard">
       <div class="output-label">
         <i class="ti ti-file-text"></i> Evaluatie
-        <span class="saved-badge" id="savedBadge" style="display:none;"><i class="ti ti-check"></i> Opgeslagen in Supabase</span>
+        <span class="saved-badge" id="savedBadge" style="display:none;"><i class="ti ti-check"></i> Opgeslagen</span>
       </div>
       <div class="output-txt" id="outputTxt"></div>
       <div class="btn-row">
@@ -158,6 +158,7 @@
     let memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[] };
     let recognition = null;
     let isRecording = false;
+    let isStopping = false;
     let currentFinal = '';
     let memoId = 0;
 
@@ -177,11 +178,15 @@
 
     function initRec() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { document.getElementById('noSupport').style.display = 'block'; return false; }
+      if (!SR) {
+        document.getElementById('noSupport').style.display = 'block';
+        return false;
+      }
       recognition = new SR();
       recognition.lang = 'nl-NL';
       recognition.continuous = true;
       recognition.interimResults = true;
+
       recognition.onresult = (e) => {
         let interim = '', final = '';
         for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -192,19 +197,38 @@
         if (final) currentFinal += final;
         document.getElementById('interimTxt').textContent = interim || currentFinal;
       };
-      recognition.onerror = (e) => { document.getElementById('micStatus').textContent = 'Fout: ' + e.error; stopRec(false); };
-      recognition.onend = () => { if (isRecording) recognition.start(); };
+
+      recognition.onerror = (e) => {
+        console.error('Speech error:', e.error);
+        if (!isStopping) {
+          document.getElementById('micStatus').textContent = 'Fout: ' + e.error;
+          resetMicUI();
+        }
+      };
+
+      recognition.onend = () => {
+        // Alleen herstarten als we nog aan het opnemen zijn en NIET handmatig stoppen
+        if (isRecording && !isStopping) {
+          recognition.start();
+        }
+      };
+
       return true;
     }
 
     function toggleRec() {
       if (!recognition && !initRec()) return;
-      if (isRecording) stopRec(true); else startRec();
+      if (isRecording) {
+        saveAndStop();
+      } else {
+        startRec();
+      }
     }
 
     function startRec() {
       currentFinal = '';
       isRecording = true;
+      isStopping = false;
       recognition.start();
       document.getElementById('micBtn').classList.add('recording');
       document.getElementById('micIcon').className = 'ti ti-player-stop';
@@ -213,22 +237,35 @@
       document.getElementById('interimTxt').textContent = '';
     }
 
-    async function stopRec(save) {
+    async function saveAndStop() {
+      // Zet flags zodat onend niet herstart
+      isStopping = true;
       isRecording = false;
-      if (recognition) recognition.stop();
-      document.getElementById('micBtn').classList.remove('recording');
-      document.getElementById('micIcon').className = 'ti ti-microphone';
-      document.getElementById('micStatus').className = 'mic-status';
+
+      // Pak de tekst VOOR we stoppen
       const tekst = currentFinal.trim();
-      if (save && tekst) {
+
+      recognition.stop();
+      resetMicUI();
+
+      if (tekst) {
         document.getElementById('micStatus').textContent = 'Memo sorteren...';
+        document.getElementById('micBtn').disabled = true;
         await sorteerMemo(tekst);
+        document.getElementById('micBtn').disabled = false;
         document.getElementById('micStatus').textContent = 'Opgeslagen — druk op de microfoon voor een volgende memo';
         document.getElementById('interimTxt').textContent = '';
       } else {
-        document.getElementById('micStatus').textContent = 'Druk op de microfoon en spreek een memo in';
-        document.getElementById('interimTxt').textContent = '';
+        document.getElementById('micStatus').textContent = 'Geen tekst herkend — probeer opnieuw';
       }
+
+      isStopping = false;
+    }
+
+    function resetMicUI() {
+      document.getElementById('micBtn').classList.remove('recording');
+      document.getElementById('micIcon').className = 'ti ti-microphone';
+      document.getElementById('micStatus').className = 'mic-status';
     }
 
     async function sorteerMemo(tekst) {
@@ -253,10 +290,12 @@ Memo: "${tekst}"
 Antwoord met ALLEEN de categorienaam.`
           }]
         }, null, false);
+
         let cat = json.content?.[0]?.text?.trim().toLowerCase() || 'algemeen';
         if (!CATS.includes(cat)) cat = 'algemeen';
         addMemo(cat, tekst);
       } catch(e) {
+        console.error('Sorteer fout:', e);
         addMemo('algemeen', tekst);
       }
     }
@@ -280,7 +319,10 @@ Antwoord met ALLEEN de categorienaam.`
       const items = memos[cat];
       cnt.textContent = items.length;
       cnt.className = 'cat-count' + (items.length > 0 ? ' has' : '');
-      if (items.length === 0) { list.innerHTML = '<span class="empty-hint">Nog geen memo\'s</span>'; return; }
+      if (items.length === 0) {
+        list.innerHTML = '<span class="empty-hint">Nog geen memo\'s</span>';
+        return;
+      }
       list.innerHTML = items.map(m =>
         `<div class="memo-item">
           <span class="memo-time">${m.tijd}</span>
@@ -385,7 +427,10 @@ ${memoTekst}`;
       navigator.clipboard.writeText(document.getElementById('outputTxt').textContent).then(() => {
         document.getElementById('copyTxt').textContent = 'Gekopieerd!';
         document.getElementById('copyIcon').className = 'ti ti-check';
-        setTimeout(() => { document.getElementById('copyTxt').textContent = 'Kopieer'; document.getElementById('copyIcon').className = 'ti ti-copy'; }, 2000);
+        setTimeout(() => {
+          document.getElementById('copyTxt').textContent = 'Kopieer';
+          document.getElementById('copyIcon').className = 'ti ti-copy';
+        }, 2000);
       });
     }
 
