@@ -283,28 +283,42 @@
       try {
         const json = await callClaude({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 20,
+          max_tokens: 400,
           messages: [{
             role: 'user',
-            content: `Sorteer deze memo in één categorie: verloop, algemeen, personeel, dj, lichten, veiligheid, td.
+            content: `Je bent een assistent die gesproken memo's van een nachtclubmanager verwerkt. Splits de onderstaande memo op in losse stukjes per categorie. Elke categorie mag meerdere stukjes krijgen, en een stukje mag maar in één categorie.
 
-verloop = drukte, opbouw avond, tijden, bezoekersaantallen
-algemeen = concept avond, opening, sluiting, bijzonderheden
-personeel = barmedewerkers, wie werkte waar, starttijden, prestaties
-dj = DJ namen, sets, muziek, optredens
-lichten = lightjockey, lichtshow, belichting
-veiligheid = portiers, beveiliging, incidenten, toegangscontrole
-td = kapotte apparatuur, technische problemen
+Categorieën:
+- verloop: drukte, opbouw avond, tijden, bezoekersaantallen
+- algemeen: concept avond, opening, sluiting, algemene bijzonderheden
+- personeel: barmedewerkers, wie werkte waar, starttijden, prestaties
+- dj: DJ namen, sets, muziek, optredens
+- lichten: lightjockey, lichtshow, belichting
+- veiligheid: portiers, beveiliging, incidenten, toegangscontrole
+- td: kapotte apparatuur, technische problemen
 
 Memo: "${tekst}"
 
-Antwoord met ALLEEN de categorienaam.`
+Antwoord ALLEEN met een JSON array, geen uitleg, geen markdown. Formaat:
+[{"cat":"verloop","tekst":"..."},{"cat":"personeel","tekst":"..."}]
+
+Als de hele memo over één categorie gaat, geef dan één object terug. Laat categorieën weg als er niets over gezegd wordt.`
           }]
         }, null, false);
 
-        let cat = json.content?.[0]?.text?.trim().toLowerCase() || 'algemeen';
-        if (!CATS.includes(cat)) cat = 'algemeen';
-        addMemo(cat, tekst);
+        const raw = json.content?.[0]?.text?.trim() || '[]';
+        const clean = raw.replace(/```json|```/g, '').trim();
+        let items = JSON.parse(clean);
+
+        if (!Array.isArray(items) || items.length === 0) {
+          addMemo('algemeen', tekst);
+          return;
+        }
+
+        for (const item of items) {
+          const cat = CATS.includes(item.cat) ? item.cat : 'algemeen';
+          addMemo(cat, item.tekst);
+        }
       } catch(e) {
         console.error('Sorteer fout:', e);
         addMemo('algemeen', tekst);
