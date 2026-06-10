@@ -15,6 +15,7 @@
       --green-bg: #eaf3de; --green-text: #3b6d11;
       --red: #a32d2d; --red-bg: #fcebeb;
       --amber-bg: #faeeda; --amber-text: #633806;
+      --blue-bg: #e6f1fb; --blue-text: #0c447c;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -24,379 +25,566 @@
         --green-bg: #173404; --green-text: #c0dd97;
         --red: #f09595; --red-bg: #501313;
         --amber-bg: #412402; --amber-text: #fac775;
+        --blue-bg: #042c53; --blue-text: #b5d4f4;
       }
     }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding: 1.5rem 1rem 3rem; }
-    .container { max-width: 680px; margin: 0 auto; }
-    h1 { font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
-    .topbar { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 8px; }
+    h1 { font-size: 20px; font-weight: 500; }
+    .header-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Topbar */
+    .topbar { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .topbar-group { display: flex; align-items: center; gap: 6px; }
-    .topbar-label { font-size: 12px; color: var(--text2); }
-    .topbar input { font-family: inherit; font-size: 13px; padding: 5px 9px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); }
-    .no-support { background: var(--amber-bg); color: var(--amber-text); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; margin-bottom: 1rem; display: none; }
-    .mic-center { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 1.5rem; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 1rem; }
-    .mic-btn { width: 68px; height: 68px; border-radius: 50%; border: 2px solid var(--border2); background: var(--bg); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 28px; transition: all 0.15s; }
+    .topbar-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+    .topbar input { font-family: inherit; font-size: 13px; padding: 5px 9px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); flex: 1; min-width: 0; }
+
+    /* Mic */
+    .mic-center { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 1.25rem; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 1rem; }
+    .mic-btn { width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--border2); background: var(--bg); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 26px; transition: all 0.15s; }
     .mic-btn:hover { background: var(--bg2); }
     .mic-btn.recording { border-color: var(--red); background: var(--red-bg); color: var(--red); animation: pulse 1.2s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{transform:scale(1);}50%{transform:scale(1.07);} }
-    .mic-status { font-size: 14px; color: var(--text2); text-align: center; }
+    .mic-status { font-size: 13px; color: var(--text2); text-align: center; }
     .mic-status.active { color: var(--red); font-weight: 500; }
-    .interim { font-size: 13px; color: var(--text3); font-style: italic; min-height: 18px; text-align: center; max-width: 500px; line-height: 1.5; }
+    .interim { font-size: 12px; color: var(--text3); font-style: italic; min-height: 16px; text-align: center; max-width: 500px; line-height: 1.5; }
+    .no-support { background: var(--amber-bg); color: var(--amber-text); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; margin-bottom: 1rem; display: none; }
+
+    /* Categories */
     .cats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
-    @media (max-width: 480px) { .cats { grid-template-columns: 1fr; } }
+    @media (max-width: 520px) { .cats { grid-template-columns: 1fr; } .topbar { grid-template-columns: 1fr; } }
     .cat-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 10px 12px; }
     .cat-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .cat-icon { font-size: 16px; color: var(--text2); }
+    .cat-icon { font-size: 15px; color: var(--text2); }
     .cat-name { font-size: 13px; font-weight: 500; color: var(--text); }
     .cat-count { margin-left: auto; font-size: 11px; padding: 2px 7px; border-radius: 20px; background: var(--bg2); color: var(--text2); }
     .cat-count.has { background: var(--green-bg); color: var(--green-text); }
     .memo-list { display: flex; flex-direction: column; gap: 5px; }
-    .memo-item { font-size: 12px; color: var(--text2); background: var(--bg2); border-radius: var(--radius); padding: 6px 8px; line-height: 1.5; display: flex; gap: 6px; align-items: flex-start; }
-    .memo-time { font-size: 11px; color: var(--text3); white-space: nowrap; margin-top: 1px; }
-    .memo-del { margin-left: auto; cursor: pointer; color: var(--text3); font-size: 14px; flex-shrink: 0; }
-    .memo-del:hover { color: var(--red); }
+    .memo-item { font-size: 12px; background: var(--bg2); border-radius: var(--radius); padding: 0; overflow: hidden; border: 0.5px solid transparent; }
+    .memo-item.editing { border-color: var(--border2); }
+    .memo-view { display: flex; gap: 6px; align-items: flex-start; padding: 6px 8px; }
+    .memo-time { font-size: 11px; color: var(--text3); white-space: nowrap; margin-top: 1px; flex-shrink: 0; }
+    .memo-txt { flex: 1; color: var(--text2); line-height: 1.5; cursor: pointer; }
+    .memo-txt:hover { color: var(--text); }
+    .memo-actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .memo-icon-btn { cursor: pointer; color: var(--text3); font-size: 13px; padding: 2px; border-radius: 4px; }
+    .memo-icon-btn:hover { color: var(--text); background: var(--bg3); }
+    .memo-icon-btn.del:hover { color: var(--red); }
+    .memo-edit-area { padding: 6px 8px; display: none; }
+    .memo-edit-area.show { display: block; }
+    .memo-edit-input { width: 100%; font-family: inherit; font-size: 12px; padding: 5px 7px; border-radius: 6px; border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); resize: vertical; min-height: 50px; }
+    .memo-edit-btns { display: flex; gap: 5px; margin-top: 5px; }
+    .memo-edit-save { padding: 4px 10px; font-size: 11px; border: 0.5px solid var(--border2); border-radius: 6px; background: var(--green-bg); color: var(--green-text); cursor: pointer; font-family: inherit; }
+    .memo-edit-cancel { padding: 4px 10px; font-size: 11px; border: 0.5px solid var(--border2); border-radius: 6px; background: var(--bg2); color: var(--text2); cursor: pointer; font-family: inherit; }
+    .add-memo-row { margin-top: 6px; display: flex; gap: 5px; }
+    .add-memo-input { flex: 1; font-family: inherit; font-size: 12px; padding: 5px 8px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); }
+    .add-memo-input::placeholder { color: var(--text3); }
+    .add-memo-btn { padding: 5px 10px; font-size: 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text2); cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .add-memo-btn:hover { background: var(--bg3); }
     .empty-hint { font-size: 12px; color: var(--text3); font-style: italic; }
+
+    /* Buttons */
+    .btn { padding: 8px 14px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text2); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; font-family: inherit; }
+    .btn:hover { background: var(--bg2); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn-primary:hover { opacity: 0.85; background: var(--text); }
+    .btn-green { background: var(--green-bg); color: var(--green-text); border-color: var(--green-text); }
+    .btn-green:hover { opacity: 0.85; }
     .gen-btn { width: 100%; padding: 12px; font-size: 15px; font-weight: 500; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s; margin-bottom: 1rem; font-family: inherit; }
     .gen-btn:hover { background: var(--bg2); }
     .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Opgeslagen avonden */
+    .saved-bar { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 10px 14px; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .saved-bar-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+    .saved-select { font-family: inherit; font-size: 13px; padding: 5px 9px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); flex: 1; min-width: 0; }
+
+    /* Output */
     .output-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; display: none; }
-    .saved-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; background: var(--green-bg); color: var(--green-text); padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; }
     .output-label { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .output-txt { font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; background: var(--bg2); border-radius: var(--radius); padding: 14px; }
-    .btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-    .sm-btn { padding: 8px 14px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s; font-family: inherit; }
-    .sm-btn:hover { background: var(--bg2); }
-    .spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .saved-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; background: var(--green-bg); color: var(--green-text); padding: 2px 8px; border-radius: 20px; }
+    .output-txt { font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; background: var(--bg2); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--bg); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 480px; width: 100%; border: 0.5px solid var(--border2); }
+    .modal h2 { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
+    .modal p { font-size: 13px; color: var(--text2); margin-bottom: 12px; line-height: 1.6; }
+    .modal-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <div class="container">
+<div class="container">
+  <div class="header">
     <h1>Avondevaluatie</h1>
-
-    <div class="topbar">
-      <div class="topbar-group">
-        <span class="topbar-label">Datum:</span>
-        <input type="date" id="datum" style="width:140px;" />
-      </div>
-      <div class="topbar-group" style="flex:1; min-width:140px;">
-        <span class="topbar-label">Locatie:</span>
-        <input type="text" id="locatie" placeholder="bijv. Club X Nijmegen" style="flex:1;" />
-      </div>
-      <div class="topbar-group">
-        <span class="topbar-label">Open:</span>
-        <input type="time" id="openTijd" value="23:00" style="width:90px;" />
-      </div>
-      <div class="topbar-group">
-        <span class="topbar-label">Sluit:</span>
-        <input type="time" id="sluitTijd" value="05:00" style="width:90px;" />
-      </div>
-      <div class="topbar-group" style="flex:1; min-width:140px;">
-        <span class="topbar-label">Naam:</span>
-        <input type="text" id="naamInput" placeholder="Jouw naam" style="flex:1;" />
-      </div>
-    </div>
-
-    <div class="no-support" id="noSupport">Spraakherkenning werkt het best in Chrome (desktop of Android).</div>
-
-    <div class="mic-center">
-      <button class="mic-btn" id="micBtn" onclick="toggleRec()" aria-label="Start memo-opname">
-        <i class="ti ti-microphone" id="micIcon"></i>
-      </button>
-      <div class="mic-status" id="micStatus">Druk op de microfoon en spreek een memo in</div>
-      <div class="interim" id="interimTxt"></div>
-    </div>
-
-    <div class="cats">
-      <div class="cat-card">
-        <div class="cat-header"><i class="ti ti-chart-line cat-icon"></i><span class="cat-name">Verloop van de avond</span><span class="cat-count" id="cnt-verloop">0</span></div>
-        <div class="memo-list" id="list-verloop"><span class="empty-hint">Nog geen memo's</span></div>
-      </div>
-      <div class="cat-card">
-        <div class="cat-header"><i class="ti ti-info-circle cat-icon"></i><span class="cat-name">Algemeen</span><span class="cat-count" id="cnt-algemeen">0</span></div>
-        <div class="memo-list" id="list-algemeen"><span class="empty-hint">Nog geen memo's</span></div>
-      </div>
-      <div class="cat-card">
-        <div class="cat-header"><i class="ti ti-users cat-icon"></i><span class="cat-name">Personeel</span><span class="cat-count" id="cnt-personeel">0</span></div>
-        <div class="memo-list" id="list-personeel"><span class="empty-hint">Nog geen memo's</span></div>
-      </div>
-      <div class="cat-card">
-        <div class="cat-header"><i class="ti ti-music cat-icon"></i><span class="cat-name">DJ's</span><span class="cat-count" id="cnt-dj">0</span></div>
-        <div class="memo-list" id="list-dj"><span class="empty-hint">Nog geen memo's</span></div>
-      </div>
-      <div class="cat-card">
-        <div class="cat-header"><i class="ti ti-bulb cat-icon"></i><span class="cat-name">Lichten (LightJockey)</span><span class="cat-count" id="cnt-lichten">0</span></div>
-        <div class="memo-list" id="list-lichten"><span class="empty-hint">Nog geen memo's</span></div>
-      </div>
-      <div class="cat-card">
-        <div class="cat-header"><i class="ti ti-shield cat-icon"></i><span class="cat-name">Veiligheid</span><span class="cat-count" id="cnt-veiligheid">0</span></div>
-        <div class="memo-list" id="list-veiligheid"><span class="empty-hint">Nog geen memo's</span></div>
-      </div>
-      <div class="cat-card">
-        <div class="cat-header"><i class="ti ti-tool cat-icon"></i><span class="cat-name">TD (Technische dienst)</span><span class="cat-count" id="cnt-td">0</span></div>
-        <div class="memo-list" id="list-td"><span class="empty-hint">Nog geen memo's</span></div>
-      </div>
-    </div>
-
-    <button class="gen-btn" id="genBtn" onclick="generateEval()" disabled>
-      <i class="ti ti-sparkles" id="genIcon"></i>
-      <span id="genTxt">Genereer evaluatie</span>
-    </button>
-
-    <div class="output-card" id="outputCard">
-      <div class="output-label">
-        <i class="ti ti-file-text"></i> Evaluatie
-        <span class="saved-badge" id="savedBadge" style="display:none;"><i class="ti ti-check"></i> Opgeslagen</span>
-      </div>
-      <div class="output-txt" id="outputTxt"></div>
-      <div class="btn-row">
-        <button class="sm-btn" onclick="copyOut()"><i class="ti ti-copy" id="copyIcon"></i><span id="copyTxt">Kopieer</span></button>
-        <button class="sm-btn" onclick="resetAll()"><i class="ti ti-refresh"></i> Nieuwe avond</button>
-      </div>
+    <div class="header-btns">
+      <button class="btn" onclick="saveProgress()"><i class="ti ti-device-floppy"></i> Opslaan</button>
+      <button class="btn" onclick="newAvond()"><i class="ti ti-plus"></i> Nieuwe avond</button>
     </div>
   </div>
 
-  <script>
-    const CATS = ['verloop','algemeen','personeel','dj','lichten','veiligheid','td'];
-    const CAT_LABELS = {
-      verloop: 'Verloop van de avond', algemeen: 'Algemeen', personeel: 'Personeel',
-      dj: "DJ's", lichten: 'Lichten (LightJockey)', veiligheid: 'Veiligheid (Beveiliger)', td: 'TD (Technische dienst)'
-    };
+  <!-- Opgeslagen avonden laden -->
+  <div class="saved-bar">
+    <span class="saved-bar-label"><i class="ti ti-history"></i> Eerder opgeslagen:</span>
+    <select class="saved-select" id="savedSelect" onchange="loadSaved()">
+      <option value="">— Kies een avond —</option>
+    </select>
+    <button class="btn" onclick="deleteSaved()"><i class="ti ti-trash"></i></button>
+  </div>
 
-    let memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[] };
-    let recognition = null;
-    let isRecording = false;
-    let isStopping = false;
-    let currentFinal = '';
-    let currentInterim = '';
-    let memoId = 0;
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-group">
+      <span class="topbar-label">Datum:</span>
+      <input type="date" id="datum" />
+    </div>
+    <div class="topbar-group">
+      <span class="topbar-label">Locatie:</span>
+      <input type="text" id="locatie" placeholder="bijv. Club X Nijmegen" />
+    </div>
+    <div class="topbar-group">
+      <span class="topbar-label">Open:</span>
+      <input type="time" id="openTijd" value="23:00" />
+    </div>
+    <div class="topbar-group">
+      <span class="topbar-label">Sluit:</span>
+      <input type="time" id="sluitTijd" value="05:00" />
+    </div>
+    <div class="topbar-group" style="grid-column: span 2;">
+      <span class="topbar-label">Naam:</span>
+      <input type="text" id="naamInput" placeholder="Jouw naam" />
+    </div>
+  </div>
 
-    function timeNow() {
-      const d = new Date();
-      return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  <div class="no-support" id="noSupport">Spraakherkenning werkt het best in Chrome (desktop of Android).</div>
+
+  <!-- Mic -->
+  <div class="mic-center">
+    <button class="mic-btn" id="micBtn" onclick="toggleRec()">
+      <i class="ti ti-microphone" id="micIcon"></i>
+    </button>
+    <div class="mic-status" id="micStatus">Druk op de microfoon en spreek een memo in</div>
+    <div class="interim" id="interimTxt"></div>
+  </div>
+
+  <!-- Categorieën -->
+  <div class="cats" id="catsGrid"></div>
+
+  <button class="gen-btn" id="genBtn" onclick="generateEval()" disabled>
+    <i class="ti ti-sparkles" id="genIcon"></i>
+    <span id="genTxt">Genereer evaluatie</span>
+  </button>
+
+  <!-- Output -->
+  <div class="output-card" id="outputCard">
+    <div class="output-label">
+      <i class="ti ti-file-text"></i> Evaluatie
+      <span class="saved-badge" id="savedBadge" style="display:none;"><i class="ti ti-check"></i> Opgeslagen</span>
+    </div>
+    <div class="output-txt" id="outputTxt"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="copyOutput()"><i class="ti ti-copy" id="copyIcon"></i><span id="copyTxt">Kopieer tekst</span></button>
+      <button class="btn btn-green" onclick="downloadTxt()"><i class="ti ti-download"></i> Download .txt</button>
+      <button class="btn" onclick="openMail()"><i class="ti ti-mail"></i> Open in e-mail</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bewerk modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2>Memo bewerken</h2>
+    <textarea id="editModalInput" style="width:100%;font-family:inherit;font-size:13px;padding:8px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);resize:vertical;min-height:80px;margin-bottom:10px;"></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="saveEditModal()">Opslaan</button>
+      <button class="btn" onclick="closeEditModal()">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATS = ['verloop','algemeen','personeel','dj','lichten','veiligheid','td'];
+const CAT_META = {
+  verloop:   { label: 'Verloop van de avond',  icon: 'ti-chart-line' },
+  algemeen:  { label: 'Algemeen',               icon: 'ti-info-circle' },
+  personeel: { label: 'Personeel',              icon: 'ti-users' },
+  dj:        { label: "DJ's",                   icon: 'ti-music' },
+  lichten:   { label: 'Lichten (LightJockey)',  icon: 'ti-bulb' },
+  veiligheid:{ label: 'Veiligheid',             icon: 'ti-shield' },
+  td:        { label: 'TD (Technische dienst)', icon: 'ti-tool' }
+};
+const CAT_LABELS_EVAL = {
+  verloop: 'Verloop van de avond', algemeen: 'Algemeen', personeel: 'Personeel',
+  dj: "DJ's", lichten: 'Lichten (LightJockey)', veiligheid: 'Veiligheid (Beveiliger)', td: 'TD (Technische dienst)'
+};
+
+let memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[] };
+let recognition = null;
+let isRecording = false;
+let isStopping = false;
+let currentFinal = '';
+let currentInterim = '';
+let memoId = 0;
+let editModalCat = null;
+let editModalId = null;
+
+// ── Tijdshulp ──
+function timeNow() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+// ── API ──
+async function callClaude(payload, meta, saveToSupabase) {
+  const res = await fetch('/.netlify/functions/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ payload, meta: meta || {}, saveToSupabase: !!saveToSupabase })
+  });
+  return res.json();
+}
+
+// ── Spraakherkenning ──
+function initRec() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { document.getElementById('noSupport').style.display = 'block'; return false; }
+  recognition = new SR();
+  recognition.lang = 'nl-NL';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t + ' ';
+      else interim += t;
     }
+    if (final) currentFinal += final;
+    currentInterim = interim;
+    document.getElementById('interimTxt').textContent = interim || currentFinal;
+  };
+  recognition.onerror = (e) => {
+    if (!isStopping) { document.getElementById('micStatus').textContent = 'Fout: ' + e.error; resetMicUI(); }
+  };
+  recognition.onend = () => { if (isRecording && !isStopping) recognition.start(); };
+  return true;
+}
 
-    async function callClaude(payload, meta, saveToSupabase) {
-      const res = await fetch('/.netlify/functions/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload, meta: meta || {}, saveToSupabase: !!saveToSupabase })
-      });
-      return res.json();
-    }
+function toggleRec() {
+  if (!recognition && !initRec()) return;
+  if (isRecording) saveAndStop(); else startRec();
+}
 
-    function initRec() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) {
-        document.getElementById('noSupport').style.display = 'block';
-        return false;
-      }
-      recognition = new SR();
-      recognition.lang = 'nl-NL';
-      recognition.continuous = true;
-      recognition.interimResults = true;
+function startRec() {
+  currentFinal = ''; currentInterim = '';
+  isRecording = true; isStopping = false;
+  recognition.start();
+  document.getElementById('micBtn').classList.add('recording');
+  document.getElementById('micIcon').className = 'ti ti-player-stop';
+  document.getElementById('micStatus').textContent = 'Opname bezig — druk nogmaals om op te slaan';
+  document.getElementById('micStatus').className = 'mic-status active';
+  document.getElementById('interimTxt').textContent = '';
+}
 
-      recognition.onresult = (e) => {
-        let interim = '', final = '';
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const t = e.results[i][0].transcript;
-          if (e.results[i].isFinal) final += t + ' ';
-          else interim += t;
-        }
-        if (final) currentFinal += final;
-        currentInterim = interim;
-        document.getElementById('interimTxt').textContent = interim || currentFinal;
-      };
+async function saveAndStop() {
+  isStopping = true; isRecording = false;
+  const tekst = (currentFinal + ' ' + currentInterim).trim();
+  recognition.stop();
+  resetMicUI();
+  if (tekst) {
+    document.getElementById('micStatus').textContent = 'Memo verwerken...';
+    document.getElementById('micBtn').disabled = true;
+    await sorteerMemo(tekst);
+    document.getElementById('micBtn').disabled = false;
+    document.getElementById('micStatus').textContent = 'Opgeslagen — druk op de microfoon voor een volgende memo';
+    document.getElementById('interimTxt').textContent = '';
+  } else {
+    document.getElementById('micStatus').textContent = 'Geen tekst herkend — probeer opnieuw';
+  }
+  isStopping = false;
+}
 
-      recognition.onerror = (e) => {
-        console.error('Speech error:', e.error);
-        if (!isStopping) {
-          document.getElementById('micStatus').textContent = 'Fout: ' + e.error;
-          resetMicUI();
-        }
-      };
+function resetMicUI() {
+  document.getElementById('micBtn').classList.remove('recording');
+  document.getElementById('micIcon').className = 'ti ti-microphone';
+  document.getElementById('micStatus').className = 'mic-status';
+}
 
-      recognition.onend = () => {
-        // Alleen herstarten als we nog aan het opnemen zijn en NIET handmatig stoppen
-        if (isRecording && !isStopping) {
-          recognition.start();
-        }
-      };
+// ── Sorteren ──
+async function sorteerMemo(tekst) {
+  try {
+    const json = await callClaude({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 600,
+      messages: [{ role: 'user', content: `Splits deze gesproken memo van een nachtclubmanager op in losse fragmenten per categorie.
 
-      return true;
-    }
-
-    function toggleRec() {
-      if (!recognition && !initRec()) return;
-      if (isRecording) {
-        saveAndStop();
-      } else {
-        startRec();
-      }
-    }
-
-    function startRec() {
-      currentFinal = '';
-      currentInterim = '';
-      isRecording = true;
-      isStopping = false;
-      recognition.start();
-      document.getElementById('micBtn').classList.add('recording');
-      document.getElementById('micIcon').className = 'ti ti-player-stop';
-      document.getElementById('micStatus').textContent = 'Opname bezig — druk nogmaals om op te slaan';
-      document.getElementById('micStatus').className = 'mic-status active';
-      document.getElementById('interimTxt').textContent = '';
-    }
-
-    async function saveAndStop() {
-      // Zet flags zodat onend niet herstart
-      isStopping = true;
-      isRecording = false;
-
-      // Pak finale tekst, met interim als fallback
-      const tekst = (currentFinal + ' ' + currentInterim).trim();
-
-      recognition.stop();
-      resetMicUI();
-
-      if (tekst) {
-        document.getElementById('micStatus').textContent = 'Memo sorteren...';
-        document.getElementById('micBtn').disabled = true;
-        await sorteerMemo(tekst);
-        document.getElementById('micBtn').disabled = false;
-        document.getElementById('micStatus').textContent = 'Opgeslagen — druk op de microfoon voor een volgende memo';
-        document.getElementById('interimTxt').textContent = '';
-      } else {
-        document.getElementById('micStatus').textContent = 'Geen tekst herkend — probeer opnieuw';
-      }
-
-      isStopping = false;
-    }
-
-    function resetMicUI() {
-      document.getElementById('micBtn').classList.remove('recording');
-      document.getElementById('micIcon').className = 'ti ti-microphone';
-      document.getElementById('micStatus').className = 'mic-status';
-    }
-
-    async function sorteerMemo(tekst) {
-      try {
-        const json = await callClaude({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 600,
-          messages: [{
-            role: 'user',
-            content: `Splits deze gesproken memo van een nachtclubmanager op in losse fragmenten per categorie. Elke zin of gedachte hoort bij precies één categorie.
-
-Categorieën en wat erin hoort:
-- verloop: hoe druk het was, hoe de avond zich opbouwde, tijden, aantallen bezoekers
-- algemeen: concept van de avond, opening, sluiting, algemene bijzonderheden
-- personeel: namen van barmedewerkers, wie waar werkte, hoe ze het deden
-- dj: naam DJ, hoe de set was, muziek, optreden
+Categorieën:
+- verloop: drukte, opbouw avond, tijden, bezoekersaantallen
+- algemeen: concept avond, opening, sluiting, algemene bijzonderheden
+- personeel: namen barmedewerkers, wie waar werkte, hoe ze het deden
+- dj: naam DJ, hoe de set was, muziek
 - lichten: naam lightjockey, hoe de lichten waren
-- veiligheid: naam portier, hoe de beveiliging was, incidenten aan de deur
-- td: kapotte apparatuur, lampen stuk, geluidsproblemen, technische storingen
+- veiligheid: naam portier, hoe de beveiliging was, incidenten
+- td: kapotte apparatuur, lampen stuk, geluidsproblemen
 
 Memo: "${tekst}"
 
-Geef je antwoord als een JSON array. Gebruik ALLEEN deze exacte velden: "cat" en "tekst". Geen andere tekst, geen uitleg, geen markdown, geen backticks. Alleen de JSON array.
+Geef ALLEEN een JSON array terug, geen uitleg, geen markdown:
+[{"cat":"personeel","tekst":"Sebastiaan stond achter de bar"},{"cat":"td","tekst":"De lampen zijn stuk"}]` }]
+    }, null, false);
 
-Voorbeeld output:
-[{"cat":"personeel","tekst":"Sebastiaan en Peter stonden achter de bar"},{"cat":"dj","tekst":"DJ Cruise heeft gedraaid"},{"cat":"td","tekst":"De lampen en het geluid zijn stuk"}]`
-          }]
-        }, null, false);
-
-        let raw = json.content?.[0]?.text?.trim() || '';
-        // Verwijder eventuele markdown backticks
-        raw = raw.replace(/```json|```/g, '').trim();
-        // Pak alleen het JSON array gedeelte
-        const match = raw.match(/\[[\s\S]*\]/);
-        if (!match) throw new Error('Geen JSON array gevonden');
-
-        const items = JSON.parse(match[0]);
-
-        if (!Array.isArray(items) || items.length === 0) {
-          addMemo('algemeen', tekst);
-          return;
-        }
-
-        for (const item of items) {
-          if (!item.tekst || !item.tekst.trim()) continue;
-          const cat = CATS.includes(item.cat) ? item.cat : 'algemeen';
-          addMemo(cat, item.tekst.trim());
-        }
-      } catch(e) {
-        console.error('Sorteer fout:', e);
-        addMemo('algemeen', tekst);
-      }
+    let raw = json.content?.[0]?.text?.trim() || '';
+    raw = raw.replace(/```json|```/g, '').trim();
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('geen JSON');
+    const items = JSON.parse(match[0]);
+    if (!Array.isArray(items) || items.length === 0) { addMemo('algemeen', tekst); return; }
+    for (const item of items) {
+      if (!item.tekst?.trim()) continue;
+      addMemo(CATS.includes(item.cat) ? item.cat : 'algemeen', item.tekst.trim());
     }
+  } catch(e) {
+    addMemo('algemeen', tekst);
+  }
+}
 
-    function addMemo(cat, tekst) {
-      const id = ++memoId;
-      memos[cat].push({ id, tekst, tijd: timeNow() });
-      renderCat(cat);
-      updateGenBtn();
-    }
+// ── Memo's ──
+function addMemo(cat, tekst) {
+  const id = ++memoId;
+  memos[cat].push({ id, tekst, tijd: timeNow() });
+  renderCat(cat);
+  updateGenBtn();
+}
 
-    function deleteMemo(cat, id) {
-      memos[cat] = memos[cat].filter(m => m.id !== id);
-      renderCat(cat);
-      updateGenBtn();
-    }
+function addManualMemo(cat) {
+  const inp = document.getElementById('add-' + cat);
+  const tekst = inp.value.trim();
+  if (!tekst) return;
+  addMemo(cat, tekst);
+  inp.value = '';
+}
 
-    function renderCat(cat) {
-      const list = document.getElementById('list-' + cat);
-      const cnt = document.getElementById('cnt-' + cat);
-      const items = memos[cat];
-      cnt.textContent = items.length;
-      cnt.className = 'cat-count' + (items.length > 0 ? ' has' : '');
-      if (items.length === 0) {
-        list.innerHTML = '<span class="empty-hint">Nog geen memo\'s</span>';
-        return;
-      }
-      list.innerHTML = items.map(m =>
-        `<div class="memo-item">
+function deleteMemo(cat, id) {
+  memos[cat] = memos[cat].filter(m => m.id !== id);
+  renderCat(cat);
+  updateGenBtn();
+}
+
+function openEditModal(cat, id) {
+  const memo = memos[cat].find(m => m.id === id);
+  if (!memo) return;
+  editModalCat = cat; editModalId = id;
+  document.getElementById('editModalInput').value = memo.tekst;
+  document.getElementById('editModal').classList.add('show');
+  setTimeout(() => document.getElementById('editModalInput').focus(), 50);
+}
+
+function saveEditModal() {
+  const tekst = document.getElementById('editModalInput').value.trim();
+  if (!tekst) return;
+  const memo = memos[editModalCat].find(m => m.id === editModalId);
+  if (memo) { memo.tekst = tekst; renderCat(editModalCat); }
+  closeEditModal();
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('show');
+  editModalCat = null; editModalId = null;
+}
+
+document.getElementById('editModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('editModal')) closeEditModal();
+});
+
+function renderCat(cat) {
+  const m = CAT_META[cat];
+  const items = memos[cat];
+  const card = document.getElementById('cat-' + cat);
+  if (!card) return;
+
+  const cnt = card.querySelector('.cat-count');
+  cnt.textContent = items.length;
+  cnt.className = 'cat-count' + (items.length > 0 ? ' has' : '');
+
+  const list = card.querySelector('.memo-list');
+  if (items.length === 0) {
+    list.innerHTML = '<span class="empty-hint">Nog geen memo\'s</span>';
+  } else {
+    list.innerHTML = items.map(m =>
+      `<div class="memo-item" id="memo-${m.id}">
+        <div class="memo-view">
           <span class="memo-time">${m.tijd}</span>
-          <span style="flex:1;">${m.tekst}</span>
-          <span class="memo-del" onclick="deleteMemo('${cat}',${m.id})"><i class="ti ti-x"></i></span>
-        </div>`
-      ).join('');
-    }
+          <span class="memo-txt" onclick="openEditModal('${cat}',${m.id})">${escHtml(m.tekst)}</span>
+          <div class="memo-actions">
+            <span class="memo-icon-btn" onclick="openEditModal('${cat}',${m.id})" title="Bewerken"><i class="ti ti-pencil"></i></span>
+            <span class="memo-icon-btn del" onclick="deleteMemo('${cat}',${m.id})" title="Verwijderen"><i class="ti ti-x"></i></span>
+          </div>
+        </div>
+      </div>`
+    ).join('');
+  }
+}
 
-    function updateGenBtn() {
-      const total = CATS.reduce((s,c) => s + memos[c].length, 0);
-      document.getElementById('genBtn').disabled = total === 0;
-    }
+function buildCatsGrid() {
+  const grid = document.getElementById('catsGrid');
+  grid.innerHTML = CATS.map(cat => {
+    const m = CAT_META[cat];
+    return `<div class="cat-card" id="cat-${cat}">
+      <div class="cat-header">
+        <i class="ti ${m.icon} cat-icon"></i>
+        <span class="cat-name">${m.label}</span>
+        <span class="cat-count" id="cnt-${cat}">0</span>
+      </div>
+      <div class="memo-list" id="list-${cat}"><span class="empty-hint">Nog geen memo's</span></div>
+      <div class="add-memo-row">
+        <input class="add-memo-input" id="add-${cat}" placeholder="Typ hier een memo..." onkeydown="if(event.key==='Enter')addManualMemo('${cat}')" />
+        <button class="add-memo-btn" onclick="addManualMemo('${cat}')"><i class="ti ti-plus"></i> Voeg toe</button>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-    async function generateEval() {
-      const btn = document.getElementById('genBtn');
-      const icon = document.getElementById('genIcon');
-      const txt = document.getElementById('genTxt');
-      btn.disabled = true;
-      icon.style.display = 'none';
-      const spin = document.createElement('div');
-      spin.className = 'spinner';
-      btn.insertBefore(spin, txt);
-      txt.textContent = 'Evaluatie schrijven...';
+function updateGenBtn() {
+  const total = CATS.reduce((s,c) => s + memos[c].length, 0);
+  document.getElementById('genBtn').disabled = total === 0;
+}
 
-      const open = document.getElementById('openTijd').value;
-      const sluit = document.getElementById('sluitTijd').value;
-      const naam = document.getElementById('naamInput').value.trim() || 'Manager';
-      const datum = document.getElementById('datum').value;
-      const locatie = document.getElementById('locatie').value.trim();
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-      let memoTekst = '';
-      const memoMeta = {};
-      for (const cat of CATS) {
-        const catTekst = memos[cat].map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
-        memoMeta['memo_' + cat] = catTekst;
-        if (memos[cat].length > 0) {
-          memoTekst += `\n### ${CAT_LABELS[cat]}\n`;
-          memos[cat].forEach(m => { memoTekst += `- [${m.tijd}] ${m.tekst}\n`; });
-        }
+// ── Tussentijds opslaan (localStorage) ──
+function getFormData() {
+  return {
+    datum: document.getElementById('datum').value,
+    locatie: document.getElementById('locatie').value,
+    openTijd: document.getElementById('openTijd').value,
+    sluitTijd: document.getElementById('sluitTijd').value,
+    naam: document.getElementById('naamInput').value,
+    memos
+  };
+}
+
+function setFormData(data) {
+  document.getElementById('datum').value = data.datum || '';
+  document.getElementById('locatie').value = data.locatie || '';
+  document.getElementById('openTijd').value = data.openTijd || '23:00';
+  document.getElementById('sluitTijd').value = data.sluitTijd || '05:00';
+  document.getElementById('naamInput').value = data.naam || '';
+  memoId = 0;
+  memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[] };
+  for (const cat of CATS) {
+    if (data.memos?.[cat]) {
+      for (const m of data.memos[cat]) {
+        memoId = Math.max(memoId, m.id);
+        memos[cat].push(m);
       }
+    }
+    renderCat(cat);
+  }
+  updateGenBtn();
+  document.getElementById('outputCard').style.display = 'none';
+}
 
-      const prompt = `Je bent een professionele nachtclubmanager. Schrijf een volledige avondevaluatie op basis van onderstaande gesproken memo's. Gebruik exact dit format:
+function saveKey(datum, locatie) {
+  const d = datum || 'onbekend';
+  const l = locatie || 'onbekend';
+  return `eval_${d}_${l}`;
+}
+
+function saveProgress() {
+  const data = getFormData();
+  const key = saveKey(data.datum, data.locatie);
+  localStorage.setItem(key, JSON.stringify(data));
+  populateSavedList(key);
+  showToast('Opgeslagen!');
+}
+
+function populateSavedList(selectKey) {
+  const sel = document.getElementById('savedSelect');
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('eval_')).sort().reverse();
+  sel.innerHTML = '<option value="">— Kies een avond —</option>' +
+    keys.map(k => {
+      const d = JSON.parse(localStorage.getItem(k) || '{}');
+      const label = (d.datum || '?') + ' — ' + (d.locatie || 'onbekend') + (d.naam ? ' (' + d.naam + ')' : '');
+      return `<option value="${k}" ${k === selectKey ? 'selected' : ''}>${label}</option>`;
+    }).join('');
+}
+
+function loadSaved() {
+  const key = document.getElementById('savedSelect').value;
+  if (!key) return;
+  const raw = localStorage.getItem(key);
+  if (!raw) return;
+  setFormData(JSON.parse(raw));
+}
+
+function deleteSaved() {
+  const key = document.getElementById('savedSelect').value;
+  if (!key) return;
+  if (!confirm('Deze opgeslagen avond verwijderen?')) return;
+  localStorage.removeItem(key);
+  populateSavedList();
+}
+
+function newAvond() {
+  if (!confirm('Nieuwe avond beginnen? Niet-opgeslagen wijzigingen gaan verloren.')) return;
+  setFormData({});
+  document.getElementById('datum').value = new Date().toISOString().split('T')[0];
+  document.getElementById('savedSelect').value = '';
+}
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 18px;border-radius:20px;font-size:13px;z-index:200;transition:opacity 0.3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2000);
+}
+
+// ── Evaluatie genereren ──
+async function generateEval() {
+  const btn = document.getElementById('genBtn');
+  const icon = document.getElementById('genIcon');
+  const txt = document.getElementById('genTxt');
+  btn.disabled = true;
+  icon.style.display = 'none';
+  const spin = document.createElement('div');
+  spin.className = 'spinner';
+  btn.insertBefore(spin, txt);
+  txt.textContent = 'Evaluatie schrijven...';
+
+  const datum   = document.getElementById('datum').value;
+  const locatie = document.getElementById('locatie').value.trim();
+  const open    = document.getElementById('openTijd').value;
+  const sluit   = document.getElementById('sluitTijd').value;
+  const naam    = document.getElementById('naamInput').value.trim() || 'Manager';
+
+  let memoTekst = '';
+  const memoMeta = {};
+  for (const cat of CATS) {
+    const catTekst = memos[cat].map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
+    memoMeta['memo_' + cat] = catTekst;
+    if (memos[cat].length > 0) {
+      memoTekst += `\n### ${CAT_LABELS_EVAL[cat]}\n`;
+      memos[cat].forEach(m => { memoTekst += `- [${m.tijd}] ${m.tekst}\n`; });
+    }
+  }
+
+  const prompt = `Je bent een professionele nachtclubmanager. Schrijf een volledige avondevaluatie op basis van de memo's hieronder. Gebruik dit exacte format:
 
 Beste,
 
@@ -406,7 +594,7 @@ Opentijd: ${open}
 Sluittijd: ${sluit}
 
 VERLOOP VAN DE AVOND
-[vloeiende beschrijving van het verloop]
+[vloeiende beschrijving]
 
 ALGEMEEN
 [algemene punten]
@@ -429,58 +617,65 @@ TD (Technische dienst)
 Met vriendelijke groet,
 ${naam}
 
-Schrijf elke sectie in vloeiende volzinnen. Als er geen memo's zijn voor een categorie, schrijf dan "Geen bijzonderheden." Verzin geen feiten die niet in de memo's staan.
+Schrijf elke sectie in vloeiende volzinnen. Als er geen memo's zijn voor een categorie: "Geen bijzonderheden." Verzin geen feiten.
 
 Memo's:
 ${memoTekst}`;
 
-      try {
-        const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
-        const json = await callClaude({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1500,
-          messages: [{ role: 'user', content: prompt }]
-        }, meta, true);
+  try {
+    const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
+    const json = await callClaude({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] }, meta, true);
+    const output = json.content?.map(b => b.text || '').join('');
+    document.getElementById('outputTxt').textContent = output;
+    document.getElementById('outputCard').style.display = 'block';
+    document.getElementById('savedBadge').style.display = 'inline-flex';
+    document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(e) {
+    alert('Er ging iets mis: ' + e.message);
+  } finally {
+    spin.remove(); icon.style.display = ''; txt.textContent = 'Genereer evaluatie';
+    btn.disabled = false; updateGenBtn();
+  }
+}
 
-        const output = json.content?.map(b => b.text || '').join('');
-        document.getElementById('outputTxt').textContent = output;
-        document.getElementById('outputCard').style.display = 'block';
-        document.getElementById('savedBadge').style.display = 'inline-flex';
-        document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch(e) {
-        alert('Er ging iets mis: ' + e.message);
-      } finally {
-        spin.remove();
-        icon.style.display = '';
-        txt.textContent = 'Genereer evaluatie';
-        btn.disabled = false;
-        updateGenBtn();
-      }
-    }
+// ── Output acties ──
+function getOutputTekst() {
+  return document.getElementById('outputTxt').textContent;
+}
 
-    function copyOut() {
-      navigator.clipboard.writeText(document.getElementById('outputTxt').textContent).then(() => {
-        document.getElementById('copyTxt').textContent = 'Gekopieerd!';
-        document.getElementById('copyIcon').className = 'ti ti-check';
-        setTimeout(() => {
-          document.getElementById('copyTxt').textContent = 'Kopieer';
-          document.getElementById('copyIcon').className = 'ti ti-copy';
-        }, 2000);
-      });
-    }
+function copyOutput() {
+  navigator.clipboard.writeText(getOutputTekst()).then(() => {
+    document.getElementById('copyTxt').textContent = 'Gekopieerd!';
+    document.getElementById('copyIcon').className = 'ti ti-check';
+    setTimeout(() => { document.getElementById('copyTxt').textContent = 'Kopieer tekst'; document.getElementById('copyIcon').className = 'ti ti-copy'; }, 2000);
+  });
+}
 
-    function resetAll() {
-      CATS.forEach(c => { memos[c] = []; renderCat(c); });
-      document.getElementById('outputCard').style.display = 'none';
-      document.getElementById('savedBadge').style.display = 'none';
-      document.getElementById('outputTxt').textContent = '';
-      document.getElementById('micStatus').textContent = 'Druk op de microfoon en spreek een memo in';
-      updateGenBtn();
-    }
+function downloadTxt() {
+  const tekst = getOutputTekst();
+  const datum = document.getElementById('datum').value || 'evaluatie';
+  const locatie = document.getElementById('locatie').value.trim().replace(/\s+/g, '-') || 'club';
+  const blob = new Blob([tekst], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `evaluatie-${datum}-${locatie}.txt`;
+  a.click(); URL.revokeObjectURL(url);
+}
 
-    CATS.forEach(c => renderCat(c));
-    initRec();
-    document.getElementById('datum').value = new Date().toISOString().split('T')[0];
-  </script>
+function openMail() {
+  const tekst = getOutputTekst();
+  const datum = document.getElementById('datum').value || '';
+  const locatie = document.getElementById('locatie').value.trim() || '';
+  const subject = encodeURIComponent(`Avondevaluatie ${locatie} ${datum}`.trim());
+  const body = encodeURIComponent(tekst);
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+// ── Init ──
+buildCatsGrid();
+initRec();
+document.getElementById('datum').value = new Date().toISOString().split('T')[0];
+populateSavedList();
+</script>
 </body>
 </html>
