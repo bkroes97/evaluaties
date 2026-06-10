@@ -139,6 +139,11 @@
     <button class="btn" onclick="deleteSaved()"><i class="ti ti-trash"></i></button>
   </div>
 
+  <!-- Onderwerp -->
+  <div style="margin-bottom:1rem;">
+    <input type="text" id="onderwerp" placeholder="Onderwerp / naam van deze avond, bijv. 'Vrijdagnacht techno editie'" style="width:100%;font-family:inherit;font-size:16px;font-weight:500;padding:10px 14px;border-radius:var(--radius-lg);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);" />
+  </div>
+
   <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-group">
@@ -210,7 +215,7 @@
 </div>
 
 <script>
-const CATS = ['verloop','algemeen','personeel','dj','lichten','veiligheid','td'];
+const CATS = ['verloop','algemeen','personeel','dj','lichten','veiligheid','td','overig'];
 const CAT_META = {
   verloop:   { label: 'Verloop van de avond',  icon: 'ti-chart-line' },
   algemeen:  { label: 'Algemeen',               icon: 'ti-info-circle' },
@@ -218,14 +223,16 @@ const CAT_META = {
   dj:        { label: "DJ's",                   icon: 'ti-music' },
   lichten:   { label: 'Lichten (LightJockey)',  icon: 'ti-bulb' },
   veiligheid:{ label: 'Veiligheid',             icon: 'ti-shield' },
-  td:        { label: 'TD (Technische dienst)', icon: 'ti-tool' }
+  td:        { label: 'TD (Technische dienst)', icon: 'ti-tool' },
+  overig:    { label: 'Overig',                 icon: 'ti-dots-circle-horizontal' }
 };
 const CAT_LABELS_EVAL = {
   verloop: 'Verloop van de avond', algemeen: 'Algemeen', personeel: 'Personeel',
-  dj: "DJ's", lichten: 'Lichten (LightJockey)', veiligheid: 'Veiligheid (Beveiliger)', td: 'TD (Technische dienst)'
+  dj: "DJ's", lichten: 'Lichten (LightJockey)', veiligheid: 'Veiligheid (Beveiliger)',
+  td: 'TD (Technische dienst)', overig: 'Overig'
 };
 
-let memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[] };
+let memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[], overig:[] };
 let recognition = null;
 let isRecording = false;
 let isStopping = false;
@@ -463,6 +470,7 @@ function escHtml(t) {
 // ── Tussentijds opslaan (localStorage) ──
 function getFormData() {
   return {
+    onderwerp: document.getElementById('onderwerp').value,
     datum: document.getElementById('datum').value,
     locatie: document.getElementById('locatie').value,
     openTijd: document.getElementById('openTijd').value,
@@ -473,13 +481,14 @@ function getFormData() {
 }
 
 function setFormData(data) {
+  document.getElementById('onderwerp').value = data.onderwerp || '';
   document.getElementById('datum').value = data.datum || '';
   document.getElementById('locatie').value = data.locatie || '';
   document.getElementById('openTijd').value = data.openTijd || '23:00';
   document.getElementById('sluitTijd').value = data.sluitTijd || '05:00';
   document.getElementById('naamInput').value = data.naam || '';
   memoId = 0;
-  memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[] };
+  memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[], overig:[] };
   for (const cat of CATS) {
     if (data.memos?.[cat]) {
       for (const m of data.memos[cat]) {
@@ -493,15 +502,16 @@ function setFormData(data) {
   document.getElementById('outputCard').style.display = 'none';
 }
 
-function saveKey(datum, locatie) {
+function saveKey(datum, locatie, onderwerp) {
   const d = datum || 'onbekend';
   const l = locatie || 'onbekend';
-  return `eval_${d}_${l}`;
+  const o = onderwerp ? onderwerp.replace(/\s+/g,'-').substring(0,30) : '';
+  return `eval_${d}_${l}${o ? '_' + o : ''}`;
 }
 
 function saveProgress() {
   const data = getFormData();
-  const key = saveKey(data.datum, data.locatie);
+  const key = saveKey(data.datum, data.locatie, data.onderwerp);
   localStorage.setItem(key, JSON.stringify(data));
   populateSavedList(key);
   showToast('Opgeslagen!');
@@ -513,7 +523,7 @@ function populateSavedList(selectKey) {
   sel.innerHTML = '<option value="">— Kies een avond —</option>' +
     keys.map(k => {
       const d = JSON.parse(localStorage.getItem(k) || '{}');
-      const label = (d.datum || '?') + ' — ' + (d.locatie || 'onbekend') + (d.naam ? ' (' + d.naam + ')' : '');
+      const label = (d.onderwerp ? d.onderwerp + ' — ' : '') + (d.datum || '?') + ' — ' + (d.locatie || 'onbekend') + (d.naam ? ' (' + d.naam + ')' : '');
       return `<option value="${k}" ${k === selectKey ? 'selected' : ''}>${label}</option>`;
     }).join('');
 }
@@ -567,11 +577,12 @@ async function generateEval() {
   btn.insertBefore(spin, txt);
   txt.textContent = 'Evaluatie schrijven...';
 
-  const datum   = document.getElementById('datum').value;
-  const locatie = document.getElementById('locatie').value.trim();
-  const open    = document.getElementById('openTijd').value;
-  const sluit   = document.getElementById('sluitTijd').value;
-  const naam    = document.getElementById('naamInput').value.trim() || 'Manager';
+  const datum     = document.getElementById('datum').value;
+  const locatie   = document.getElementById('locatie').value.trim();
+  const open      = document.getElementById('openTijd').value;
+  const sluit     = document.getElementById('sluitTijd').value;
+  const naam      = document.getElementById('naamInput').value.trim() || 'Manager';
+  const onderwerp = document.getElementById('onderwerp').value.trim();
 
   let memoTekst = '';
   const memoMeta = {};
@@ -587,7 +598,7 @@ async function generateEval() {
   const prompt = `Je bent een professionele nachtclubmanager. Schrijf een volledige avondevaluatie op basis van de memo's hieronder. Gebruik dit exacte format:
 
 Beste,
-
+${onderwerp ? '\nOnderwerp: ' + onderwerp : ''}
 Datum: ${datum || 'onbekend'}
 Locatie: ${locatie || 'onbekend'}
 Opentijd: ${open}
@@ -613,6 +624,9 @@ VEILIGHEID (Beveiliger)
 
 TD (Technische dienst)
 [over technische zaken]
+
+OVERIG
+[overige punten]
 
 Met vriendelijke groet,
 ${naam}
@@ -655,10 +669,12 @@ function downloadTxt() {
   const tekst = getOutputTekst();
   const datum = document.getElementById('datum').value || 'evaluatie';
   const locatie = document.getElementById('locatie').value.trim().replace(/\s+/g, '-') || 'club';
+  const onderwerp = document.getElementById('onderwerp').value.trim().replace(/\s+/g, '-') || '';
+  const naam = [onderwerp, datum, locatie].filter(Boolean).join('-');
   const blob = new Blob([tekst], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `evaluatie-${datum}-${locatie}.txt`;
+  a.href = url; a.download = `evaluatie-${naam}.txt`;
   a.click(); URL.revokeObjectURL(url);
 }
 
@@ -666,7 +682,9 @@ function openMail() {
   const tekst = getOutputTekst();
   const datum = document.getElementById('datum').value || '';
   const locatie = document.getElementById('locatie').value.trim() || '';
-  const subject = encodeURIComponent(`Avondevaluatie ${locatie} ${datum}`.trim());
+  const onderwerp = document.getElementById('onderwerp').value.trim() || '';
+  const subjectParts = ['Avondevaluatie', onderwerp, locatie, datum].filter(Boolean);
+  const subject = encodeURIComponent(subjectParts.join(' — '));
   const body = encodeURIComponent(tekst);
   window.location.href = `mailto:?subject=${subject}&body=${body}`;
 }
