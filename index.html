@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Avondevaluatie</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f5f3;
+      --bg3: #efefed;
+      --text: #1a1a1a;
+      --text2: #666660;
+      --text3: #999993;
+      --border: rgba(0,0,0,0.12);
+      --border2: rgba(0,0,0,0.22);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --green-bg: #eaf3de;
+      --green-text: #3b6d11;
+      --red: #a32d2d;
+      --red-bg: #fcebeb;
+      --amber-bg: #faeeda;
+      --amber-text: #633806;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c;
+        --bg2: #272725;
+        --bg3: #2f2f2d;
+        --text: #f0f0ee;
+        --text2: #aaaaaa;
+        --text3: #666660;
+        --border: rgba(255,255,255,0.1);
+        --border2: rgba(255,255,255,0.2);
+        --green-bg: #173404;
+        --green-text: #c0dd97;
+        --red: #f09595;
+        --red-bg: #501313;
+        --amber-bg: #412402;
+        --amber-text: #fac775;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg3);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .container { max-width: 680px; margin: 0 auto; }
+
+    h1 { font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
+
+    .topbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+    }
+
+    .topbar-group { display: flex; align-items: center; gap: 6px; }
+    .topbar label { font-size: 12px; color: var(--text2); }
+    .topbar input {
+      font-family: inherit;
+      font-size: 13px;
+      padding: 5px 9px;
+      border-radius: var(--radius);
+      border: 0.5px solid var(--border2);
+      background: var(--bg2);
+      color: var(--text);
+    }
+
+    .no-support {
+      background: var(--amber-bg);
+      color: var(--amber-text);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .mic-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 1.5rem;
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1rem;
+    }
+
+    .mic-btn {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      border: 2px solid var(--border2);
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      transition: all 0.15s;
+    }
+
+    .mic-btn:hover { background: var(--bg2); }
+    .mic-btn.recording {
+      border-color: var(--red);
+      background: var(--red-bg);
+      color: var(--red);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%,100%{transform:scale(1);}50%{transform:scale(1.07);} }
+
+    .mic-status { font-size: 14px; color: var(--text2); text-align: center; }
+    .mic-status.active { color: var(--red); font-weight: 500; }
+    .interim {
+      font-size: 13px;
+      color: var(--text3);
+      font-style: italic;
+      min-height: 18px;
+      text-align: center;
+      max-width: 500px;
+      line-height: 1.5;
+    }
+
+    .cats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 480px) { .cats { grid-template-columns: 1fr; } }
+
+    .cat-card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 10px 12px;
+    }
+
+    .cat-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .cat-icon { font-size: 16px; color: var(--text2); }
+    .cat-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .cat-count {
+      margin-left: auto;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: var(--bg2);
+      color: var(--text2);
+    }
+    .cat-count.has { background: var(--green-bg); color: var(--green-text); }
+
+    .memo-list { display: flex; flex-direction: column; gap: 5px; }
+    .memo-item {
+      font-size: 12px;
+      color: var(--text2);
+      background: var(--bg2);
+      border-radius: var(--radius);
+      padding: 6px 8px;
+      line-height: 1.5;
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+    }
+    .memo-time { font-size: 11px; color: var(--text3); white-space: nowrap; margin-top: 1px; }
+    .memo-del { margin-left: auto; cursor: pointer; color: var(--text3); font-size: 14px; flex-shrink: 0; }
+    .memo-del:hover { color: var(--red); }
+    .empty-hint { font-size: 12px; color: var(--text3); font-style: italic; }
+
+    .gen-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s;
+      margin-bottom: 1rem;
+      font-family: inherit;
+    }
+    .gen-btn:hover { background: var(--bg2); }
+    .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .output-card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      display: none;
+    }
+
+    .output-label { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .output-txt {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text);
+      white-space: pre-wrap;
+      background: var(--bg2);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .sm-btn {
+      padding: 8px 14px;
+      font-size: 13px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .sm-btn:hover { background: var(--bg2); }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Avondevaluatie</h1>
+
+    <div class="topbar">
+      <div class="topbar-group">
+        <label>Open:</label>
+        <input type="time" id="openTijd" value="23:00" style="width:90px;" />
+      </div>
+      <div class="topbar-group">
+        <label>Sluit:</label>
+        <input type="time" id="sluitTijd" value="05:00" style="width:90px;" />
+      </div>
+      <div class="topbar-group" style="flex:1; min-width:140px;">
+        <label>Naam:</label>
+        <input type="text" id="naamInput" placeholder="Jouw naam" style="flex:1;" />
+      </div>
+    </div>
+
+    <div class="no-support" id="noSupport">
+      Spraakherkenning werkt het best in Chrome (desktop of Android).
+    </div>
+
+    <div class="mic-center">
+      <button class="mic-btn" id="micBtn" onclick="toggleRec()" aria-label="Start memo-opname">
+        <i class="ti ti-microphone" id="micIcon"></i>
+      </button>
+      <div class="mic-status" id="micStatus">Druk op de microfoon en spreek een memo in</div>
+      <div class="interim" id="interimTxt"></div>
+    </div>
+
+    <div class="cats">
+      <div class="cat-card">
+        <div class="cat-header"><i class="ti ti-chart-line cat-icon"></i><span class="cat-name">Verloop van de avond</span><span class="cat-count" id="cnt-verloop">0</span></div>
+        <div class="memo-list" id="list-verloop"><span class="empty-hint">Nog geen memo's</span></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-header"><i class="ti ti-info-circle cat-icon"></i><span class="cat-name">Algemeen</span><span class="cat-count" id="cnt-algemeen">0</span></div>
+        <div class="memo-list" id="list-algemeen"><span class="empty-hint">Nog geen memo's</span></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-header"><i class="ti ti-users cat-icon"></i><span class="cat-name">Personeel</span><span class="cat-count" id="cnt-personeel">0</span></div>
+        <div class="memo-list" id="list-personeel"><span class="empty-hint">Nog geen memo's</span></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-header"><i class="ti ti-music cat-icon"></i><span class="cat-name">DJ's</span><span class="cat-count" id="cnt-dj">0</span></div>
+        <div class="memo-list" id="list-dj"><span class="empty-hint">Nog geen memo's</span></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-header"><i class="ti ti-bulb cat-icon"></i><span class="cat-name">Lichten (LightJockey)</span><span class="cat-count" id="cnt-lichten">0</span></div>
+        <div class="memo-list" id="list-lichten"><span class="empty-hint">Nog geen memo's</span></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-header"><i class="ti ti-shield cat-icon"></i><span class="cat-name">Veiligheid</span><span class="cat-count" id="cnt-veiligheid">0</span></div>
+        <div class="memo-list" id="list-veiligheid"><span class="empty-hint">Nog geen memo's</span></div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-header"><i class="ti ti-tool cat-icon"></i><span class="cat-name">TD (Technische dienst)</span><span class="cat-count" id="cnt-td">0</span></div>
+        <div class="memo-list" id="list-td"><span class="empty-hint">Nog geen memo's</span></div>
+      </div>
+    </div>
+
+    <button class="gen-btn" id="genBtn" onclick="generateEval()" disabled>
+      <i class="ti ti-sparkles" id="genIcon"></i>
+      <span id="genTxt">Genereer evaluatie</span>
+    </button>
+
+    <div class="output-card" id="outputCard">
+      <div class="output-label"><i class="ti ti-file-text"></i> Evaluatie</div>
+      <div class="output-txt" id="outputTxt"></div>
+      <div class="btn-row">
+        <button class="sm-btn" onclick="copyOut()"><i class="ti ti-copy" id="copyIcon"></i><span id="copyTxt">Kopieer</span></button>
+        <button class="sm-btn" onclick="resetAll()"><i class="ti ti-refresh"></i> Nieuwe avond</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CATS = ['verloop','algemeen','personeel','dj','lichten','veiligheid','td'];
+    const CAT_LABELS = {
+      verloop: 'Verloop van de avond',
+      algemeen: 'Algemeen',
+      personeel: 'Personeel',
+      dj: "DJ's",
+      lichten: 'Lichten (LightJockey)',
+      veiligheid: 'Veiligheid (Beveiliger)',
+      td: 'TD (Technische dienst)'
+    };
+
+    let memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[] };
+    let recognition = null;
+    let isRecording = false;
+    let currentFinal = '';
+    let memoId = 0;
+
+    function timeNow() {
+      const d = new Date();
+      return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+
+    async function callClaude(body) {
+      const res = await fetch('/.netlify/functions/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return res.json();
+    }
+
+    function initRec() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        document.getElementById('noSupport').style.display = 'block';
+        return false;
+      }
+      recognition = new SR();
+      recognition.lang = 'nl-NL';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onresult = (e) => {
+        let interim = '', final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) final += t + ' ';
+          else interim += t;
+        }
+        if (final) currentFinal += final;
+        document.getElementById('interimTxt').textContent = interim || currentFinal;
+      };
+      recognition.onerror = (e) => {
+        document.getElementById('micStatus').textContent = 'Fout: ' + e.error;
+        stopRec(false);
+      };
+      recognition.onend = () => { if (isRecording) recognition.start(); };
+      return true;
+    }
+
+    function toggleRec() {
+      if (!recognition && !initRec()) return;
+      if (isRecording) stopRec(true);
+      else startRec();
+    }
+
+    function startRec() {
+      currentFinal = '';
+      isRecording = true;
+      recognition.start();
+      document.getElementById('micBtn').classList.add('recording');
+      document.getElementById('micIcon').className = 'ti ti-player-stop';
+      document.getElementById('micStatus').textContent = 'Opname bezig — druk nogmaals om op te slaan';
+      document.getElementById('micStatus').className = 'mic-status active';
+      document.getElementById('interimTxt').textContent = '';
+    }
+
+    async function stopRec(save) {
+      isRecording = false;
+      if (recognition) recognition.stop();
+      document.getElementById('micBtn').classList.remove('recording');
+      document.getElementById('micIcon').className = 'ti ti-microphone';
+      document.getElementById('micStatus').className = 'mic-status';
+      const tekst = currentFinal.trim();
+      if (save && tekst) {
+        document.getElementById('micStatus').textContent = 'Memo sorteren...';
+        await sorteerMemo(tekst);
+        document.getElementById('micStatus').textContent = 'Opgeslagen — druk op de microfoon voor een volgende memo';
+        document.getElementById('interimTxt').textContent = '';
+      } else {
+        document.getElementById('micStatus').textContent = 'Druk op de microfoon en spreek een memo in';
+        document.getElementById('interimTxt').textContent = '';
+      }
+    }
+
+    async function sorteerMemo(tekst) {
+      try {
+        const json = await callClaude({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 20,
+          messages: [{
+            role: 'user',
+            content: `Sorteer deze memo in één categorie: verloop, algemeen, personeel, dj, lichten, veiligheid, td.
+
+verloop = drukte, opbouw avond, tijden, bezoekersaantallen
+algemeen = concept avond, opening, sluiting, bijzonderheden
+personeel = barmedewerkers, wie werkte waar, starttijden, prestaties
+dj = DJ namen, sets, muziek, optredens
+lichten = lightjockey, lichtshow, belichting
+veiligheid = portiers, beveiliging, incidenten, toegangscontrole
+td = kapotte apparatuur, technische problemen
+
+Memo: "${tekst}"
+
+Antwoord met ALLEEN de categorienaam.`
+          }]
+        });
+        let cat = json.content?.[0]?.text?.trim().toLowerCase() || 'algemeen';
+        if (!CATS.includes(cat)) cat = 'algemeen';
+        addMemo(cat, tekst);
+      } catch(e) {
+        addMemo('algemeen', tekst);
+      }
+    }
+
+    function addMemo(cat, tekst) {
+      const id = ++memoId;
+      memos[cat].push({ id, tekst, tijd: timeNow() });
+      renderCat(cat);
+      updateGenBtn();
+    }
+
+    function deleteMemo(cat, id) {
+      memos[cat] = memos[cat].filter(m => m.id !== id);
+      renderCat(cat);
+      updateGenBtn();
+    }
+
+    function renderCat(cat) {
+      const list = document.getElementById('list-' + cat);
+      const cnt = document.getElementById('cnt-' + cat);
+      const items = memos[cat];
+      cnt.textContent = items.length;
+      cnt.className = 'cat-count' + (items.length > 0 ? ' has' : '');
+      if (items.length === 0) {
+        list.innerHTML = '<span class="empty-hint">Nog geen memo\'s</span>';
+        return;
+      }
+      list.innerHTML = items.map(m =>
+        `<div class="memo-item">
+          <span class="memo-time">${m.tijd}</span>
+          <span style="flex:1;">${m.tekst}</span>
+          <span class="memo-del" onclick="deleteMemo('${cat}',${m.id})"><i class="ti ti-x"></i></span>
+        </div>`
+      ).join('');
+    }
+
+    function updateGenBtn() {
+      const total = CATS.reduce((s,c) => s + memos[c].length, 0);
+      document.getElementById('genBtn').disabled = total === 0;
+    }
+
+    async function generateEval() {
+      const btn = document.getElementById('genBtn');
+      const icon = document.getElementById('genIcon');
+      const txt = document.getElementById('genTxt');
+      btn.disabled = true;
+      icon.style.display = 'none';
+      const spin = document.createElement('div');
+      spin.className = 'spinner';
+      btn.insertBefore(spin, txt);
+      txt.textContent = 'Evaluatie schrijven...';
+
+      const open = document.getElementById('openTijd').value;
+      const sluit = document.getElementById('sluitTijd').value;
+      const naam = document.getElementById('naamInput').value.trim() || 'Manager';
+
+      let memoTekst = '';
+      for (const cat of CATS) {
+        if (memos[cat].length > 0) {
+          memoTekst += `\n### ${CAT_LABELS[cat]}\n`;
+          memos[cat].forEach(m => { memoTekst += `- [${m.tijd}] ${m.tekst}\n`; });
+        }
+      }
+
+      const prompt = `Je bent een professionele nachtclubmanager. Schrijf een volledige avondevaluatie op basis van onderstaande gesproken memo's. Gebruik exact dit format:
+
+Beste,
+
+Opentijd: ${open}
+Sluittijd: ${sluit}
+
+VERLOOP VAN DE AVOND
+[vloeiende beschrijving van het verloop]
+
+ALGEMEEN
+[algemene punten]
+
+PERSONEEL
+[over het personeel]
+
+DJ'S
+[over de DJ's]
+
+LICHTEN (LightJockey)
+[over de lichtshow]
+
+VEILIGHEID (Beveiliger)
+[over de beveiliging]
+
+TD (Technische dienst)
+[over technische zaken]
+
+Met vriendelijke groet,
+${naam}
+
+Schrijf elke sectie in vloeiende volzinnen. Als er geen memo's zijn voor een categorie, schrijf dan "Geen bijzonderheden." Verzin geen feiten die niet in de memo's staan.
+
+Memo's:
+${memoTekst}`;
+
+      try {
+        const json = await callClaude({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1500,
+          messages: [{ role: 'user', content: prompt }]
+        });
+        const output = json.content?.map(b => b.text || '').join('');
+        document.getElementById('outputTxt').textContent = output;
+        document.getElementById('outputCard').style.display = 'block';
+        document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch(e) {
+        alert('Er ging iets mis: ' + e.message);
+      } finally {
+        spin.remove();
+        icon.style.display = '';
+        txt.textContent = 'Genereer evaluatie';
+        btn.disabled = false;
+        updateGenBtn();
+      }
+    }
+
+    function copyOut() {
+      navigator.clipboard.writeText(document.getElementById('outputTxt').textContent).then(() => {
+        document.getElementById('copyTxt').textContent = 'Gekopieerd!';
+        document.getElementById('copyIcon').className = 'ti ti-check';
+        setTimeout(() => {
+          document.getElementById('copyTxt').textContent = 'Kopieer';
+          document.getElementById('copyIcon').className = 'ti ti-copy';
+        }, 2000);
+      });
+    }
+
+    function resetAll() {
+      CATS.forEach(c => { memos[c] = []; renderCat(c); });
+      document.getElementById('outputCard').style.display = 'none';
+      document.getElementById('outputTxt').textContent = '';
+      document.getElementById('micStatus').textContent = 'Druk op de microfoon en spreek een memo in';
+      updateGenBtn();
+    }
+
+    CATS.forEach(c => renderCat(c));
+    initRec();
+  </script>
+</body>
+</html>
