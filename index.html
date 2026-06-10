@@ -283,32 +283,37 @@
       try {
         const json = await callClaude({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 400,
+          max_tokens: 600,
           messages: [{
             role: 'user',
-            content: `Je bent een assistent die gesproken memo's van een nachtclubmanager verwerkt. Splits de onderstaande memo op in losse stukjes per categorie. Elke categorie mag meerdere stukjes krijgen, en een stukje mag maar in één categorie.
+            content: `Splits deze gesproken memo van een nachtclubmanager op in losse fragmenten per categorie. Elke zin of gedachte hoort bij precies één categorie.
 
-Categorieën:
-- verloop: drukte, opbouw avond, tijden, bezoekersaantallen
-- algemeen: concept avond, opening, sluiting, algemene bijzonderheden
-- personeel: barmedewerkers, wie werkte waar, starttijden, prestaties
-- dj: DJ namen, sets, muziek, optredens
-- lichten: lightjockey, lichtshow, belichting
-- veiligheid: portiers, beveiliging, incidenten, toegangscontrole
-- td: kapotte apparatuur, technische problemen
+Categorieën en wat erin hoort:
+- verloop: hoe druk het was, hoe de avond zich opbouwde, tijden, aantallen bezoekers
+- algemeen: concept van de avond, opening, sluiting, algemene bijzonderheden
+- personeel: namen van barmedewerkers, wie waar werkte, hoe ze het deden
+- dj: naam DJ, hoe de set was, muziek, optreden
+- lichten: naam lightjockey, hoe de lichten waren
+- veiligheid: naam portier, hoe de beveiliging was, incidenten aan de deur
+- td: kapotte apparatuur, lampen stuk, geluidsproblemen, technische storingen
 
 Memo: "${tekst}"
 
-Antwoord ALLEEN met een JSON array, geen uitleg, geen markdown. Formaat:
-[{"cat":"verloop","tekst":"..."},{"cat":"personeel","tekst":"..."}]
+Geef je antwoord als een JSON array. Gebruik ALLEEN deze exacte velden: "cat" en "tekst". Geen andere tekst, geen uitleg, geen markdown, geen backticks. Alleen de JSON array.
 
-Als de hele memo over één categorie gaat, geef dan één object terug. Laat categorieën weg als er niets over gezegd wordt.`
+Voorbeeld output:
+[{"cat":"personeel","tekst":"Sebastiaan en Peter stonden achter de bar"},{"cat":"dj","tekst":"DJ Cruise heeft gedraaid"},{"cat":"td","tekst":"De lampen en het geluid zijn stuk"}]`
           }]
         }, null, false);
 
-        const raw = json.content?.[0]?.text?.trim() || '[]';
-        const clean = raw.replace(/```json|```/g, '').trim();
-        let items = JSON.parse(clean);
+        let raw = json.content?.[0]?.text?.trim() || '';
+        // Verwijder eventuele markdown backticks
+        raw = raw.replace(/```json|```/g, '').trim();
+        // Pak alleen het JSON array gedeelte
+        const match = raw.match(/\[[\s\S]*\]/);
+        if (!match) throw new Error('Geen JSON array gevonden');
+
+        const items = JSON.parse(match[0]);
 
         if (!Array.isArray(items) || items.length === 0) {
           addMemo('algemeen', tekst);
@@ -316,8 +321,9 @@ Als de hele memo over één categorie gaat, geef dan één object terug. Laat ca
         }
 
         for (const item of items) {
+          if (!item.tekst || !item.tekst.trim()) continue;
           const cat = CATS.includes(item.cat) ? item.cat : 'algemeen';
-          addMemo(cat, item.tekst);
+          addMemo(cat, item.tekst.trim());
         }
       } catch(e) {
         console.error('Sorteer fout:', e);
