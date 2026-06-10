@@ -76,6 +76,14 @@
 
     <div class="topbar">
       <div class="topbar-group">
+        <span class="topbar-label">Datum:</span>
+        <input type="date" id="datum" style="width:140px;" />
+      </div>
+      <div class="topbar-group" style="flex:1; min-width:140px;">
+        <span class="topbar-label">Locatie:</span>
+        <input type="text" id="locatie" placeholder="bijv. Club X Nijmegen" style="flex:1;" />
+      </div>
+      <div class="topbar-group">
         <span class="topbar-label">Open:</span>
         <input type="time" id="openTijd" value="23:00" style="width:90px;" />
       </div>
@@ -160,6 +168,7 @@
     let isRecording = false;
     let isStopping = false;
     let currentFinal = '';
+    let currentInterim = '';
     let memoId = 0;
 
     function timeNow() {
@@ -195,6 +204,7 @@
           else interim += t;
         }
         if (final) currentFinal += final;
+        currentInterim = interim;
         document.getElementById('interimTxt').textContent = interim || currentFinal;
       };
 
@@ -227,6 +237,7 @@
 
     function startRec() {
       currentFinal = '';
+      currentInterim = '';
       isRecording = true;
       isStopping = false;
       recognition.start();
@@ -242,8 +253,8 @@
       isStopping = true;
       isRecording = false;
 
-      // Pak de tekst VOOR we stoppen
-      const tekst = currentFinal.trim();
+      // Pak finale tekst, met interim als fallback
+      const tekst = (currentFinal + ' ' + currentInterim).trim();
 
       recognition.stop();
       resetMicUI();
@@ -351,6 +362,8 @@ Antwoord met ALLEEN de categorienaam.`
       const open = document.getElementById('openTijd').value;
       const sluit = document.getElementById('sluitTijd').value;
       const naam = document.getElementById('naamInput').value.trim() || 'Manager';
+      const datum = document.getElementById('datum').value;
+      const locatie = document.getElementById('locatie').value.trim();
 
       let memoTekst = '';
       const memoMeta = {};
@@ -367,6 +380,8 @@ Antwoord met ALLEEN de categorienaam.`
 
 Beste,
 
+Datum: ${datum || 'onbekend'}
+Locatie: ${locatie || 'onbekend'}
 Opentijd: ${open}
 Sluittijd: ${sluit}
 
@@ -400,7 +415,7 @@ Memo's:
 ${memoTekst}`;
 
       try {
-        const meta = { manager: naam, opentijd: open, sluittijd: sluit, ...memoMeta };
+        const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
         const json = await callClaude({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1500,
@@ -445,6 +460,7 @@ ${memoTekst}`;
 
     CATS.forEach(c => renderCat(c));
     initRec();
+    document.getElementById('datum').value = new Date().toISOString().split('T')[0];
   </script>
 </body>
 </html>
