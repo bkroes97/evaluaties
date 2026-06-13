@@ -125,6 +125,7 @@
   <div class="header">
     <h1>Avondevaluatie</h1>
     <div class="header-btns">
+      <a href="/dashboard.html" class="btn"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
       <button class="btn" onclick="saveProgress()"><i class="ti ti-device-floppy"></i> Opslaan</button>
       <button class="btn" onclick="newAvond()"><i class="ti ti-plus"></i> Nieuwe avond</button>
     </div>
@@ -152,7 +153,18 @@
     </div>
     <div class="topbar-group">
       <span class="topbar-label">Locatie:</span>
-      <input type="text" id="locatie" placeholder="bijv. Club X Nijmegen" />
+      <select id="locatie" style="font-family:inherit;font-size:13px;padding:5px 9px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);flex:1;min-width:0;">
+        <option value="">— Kies locatie —</option>
+        <option>Café Van Buren</option>
+        <option>Club Rolluik</option>
+        <option>BAR 2</option>
+        <option>De Drie Gezusters</option>
+        <option>Heidi's Skihut</option>
+        <option>De Kunstbar</option>
+        <option>Club Novia</option>
+        <option>De Bieb</option>
+        <option>Stadsgarderobe 024</option>
+      </select>
     </div>
     <div class="topbar-group">
       <span class="topbar-label">Open:</span>
