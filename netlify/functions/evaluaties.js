@@ -1,5 +1,4 @@
 exports.handler = async (event) => {
-  // Alleen GET
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -7,10 +6,12 @@ exports.handler = async (event) => {
   try {
     const { locatie, manager, limit = 200 } = event.queryStringParameters || {};
 
-    // Bouw de Supabase query op
-    let url = `${process.env.SUPABASE_URL}/rest/v1/evaluaties?select=*&order=created_at.desc&limit=${limit}`;
+    // Sorteer op id desc (werkt altijd), geen created_at nodig
+    let url = `${process.env.SUPABASE_URL}/rest/v1/evaluaties?select=*&order=id.desc&limit=${limit}`;
     if (locatie) url += `&locatie=eq.${encodeURIComponent(locatie)}`;
     if (manager) url += `&manager=eq.${encodeURIComponent(manager)}`;
+
+    console.log('[evaluaties.js] URL:', url);
 
     const res = await fetch(url, {
       headers: {
@@ -20,16 +21,16 @@ exports.handler = async (event) => {
       }
     });
 
+    const responseText = await res.text();
+    console.log('[evaluaties.js] Supabase status:', res.status, responseText.substring(0, 300));
+
     if (!res.ok) {
-      const errText = await res.text();
-      console.error('[evaluaties.js] Supabase fout:', res.status, errText);
       return {
         statusCode: res.status,
-        body: JSON.stringify({ error: 'Supabase fout', detail: errText })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Supabase fout', detail: responseText })
       };
     }
-
-    const data = await res.json();
 
     return {
       statusCode: 200,
@@ -37,7 +38,7 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache'
       },
-      body: JSON.stringify(data)
+      body: responseText
     };
 
   } catch (err) {
