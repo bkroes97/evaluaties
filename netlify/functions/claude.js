@@ -19,10 +19,12 @@ exports.handler = async (event) => {
 
     const data = await res.json();
 
-    // Als het een evaluatie is (niet een sorteer-aanroep), sla op in Supabase
+    // Supabase opslaan
+    let supabaseError = null;
     if (body.saveToSupabase) {
       const evaluatieTekst = data.content?.map(b => b.text || '').join('') || '';
-      await fetch(`${process.env.SUPABASE_URL}/rest/v1/evaluaties`, {
+
+      const supabaseRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/evaluaties`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -31,27 +33,38 @@ exports.handler = async (event) => {
           'Prefer': 'return=minimal'
         },
         body: JSON.stringify({
-          manager: body.meta.manager,
-          opentijd: body.meta.opentijd,
-          sluittijd: body.meta.sluittijd,
-          memo_verloop: body.meta.memo_verloop,
-          memo_algemeen: body.meta.memo_algemeen,
-          memo_personeel: body.meta.memo_personeel,
-          memo_dj: body.meta.memo_dj,
-          memo_lichten: body.meta.memo_lichten,
-          memo_veiligheid: body.meta.memo_veiligheid,
-          memo_td: body.meta.memo_td,
+          datum:          body.meta.datum       || null,
+          locatie:        body.meta.locatie      || null,
+          manager:        body.meta.manager      || null,
+          opentijd:       body.meta.opentijd     || null,
+          sluittijd:      body.meta.sluittijd    || null,
+          memo_verloop:   body.meta.memo_verloop   || null,
+          memo_algemeen:  body.meta.memo_algemeen  || null,
+          memo_personeel: body.meta.memo_personeel || null,
+          memo_dj:        body.meta.memo_dj        || null,
+          memo_lichten:   body.meta.memo_lichten   || null,
+          memo_veiligheid:body.meta.memo_veiligheid|| null,
+          memo_td:        body.meta.memo_td        || null,
+          memo_overig:    body.meta.memo_overig    || null,
           evaluatie_tekst: evaluatieTekst
         })
       });
+
+      if (!supabaseRes.ok) {
+        const errText = await supabaseRes.text();
+        supabaseError = `Supabase ${supabaseRes.status}: ${errText}`;
+        console.error('Supabase insert mislukt:', supabaseError);
+      }
     }
 
     return {
       statusCode: res.status,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify({ ...data, supabaseError })
     };
+
   } catch (err) {
+    console.error('Handler fout:', err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message })
