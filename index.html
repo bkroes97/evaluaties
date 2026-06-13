@@ -338,24 +338,39 @@ async function sorteerMemo(tekst) {
     const json = await callClaude({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
-      messages: [
-        {
-          role: 'user',
-          content: 'Splits deze nachtclub-memo op in losse fragmenten per categorie en geef ALLEEN een JSON array terug. Geen uitleg, geen markdown, begin direct met [.\n\nCategorieën:\n- verloop: drukte, sfeer, bezoekersaantallen, opbouw avond\n- algemeen: concept, thema, openingstijden\n- personeel: barmedewerkers, wie achter de bar\n- dj: DJ-naam, set, muziek\n- lichten: lightjockey, lichtshow\n- veiligheid: portiers, incidenten, Code Rood, vechtpartijen\n- td: geluid, kapotte apparatuur, technische storingen\n- overig: past nergens anders\n\nMemo: ' + tekst + '\n\nGeef ALLEEN de JSON array, begin met ['
-        },
-        {
-          role: 'assistant',
-          content: '['
-        }
-      ]
+      messages: [{
+        role: 'user',
+        content: `Jij bent een categoriseer-tool. Je output is UITSLUITEND een JSON array. Geen tekst ervoor of erna.
+
+Categorieën en hun sleutel:
+- "verloop"    = hoe de avond verliep, drukte, bezoekersaantallen, opbouw
+- "algemeen"   = naam/concept van de avond, openingstijden, locatie, bijzonderheden
+- "personeel"  = barmedewerkers bij naam, hoe zij functioneerden
+- "dj"         = DJ-namen, hun set of muziekkeuze
+- "lichten"    = lightjockey, lichtshow, sfeerverlichting
+- "veiligheid" = portiers/beveiligers, incidenten, Code Rood, vechtpartijen
+- "td"         = technische dienst, geluidsproblemen, kapotte apparatuur
+- "overig"     = past echt nergens anders
+
+Memo om te splitsen en categoriseren:
+${tekst}
+
+Geef elk fragment als object in de array. Voorbeeld van verwacht formaat:
+[{"cat":"verloop","tekst":"Het begon rustig en liep om 12 vol"},{"cat":"personeel","tekst":"Sebastiaan stond achter de bar"},{"cat":"veiligheid","tekst":"Code Rood de portier heeft dat goed ingegrepen"}]
+
+Jouw JSON array:`
+      }]
     }, null, false);
 
     raw = json.content?.[0]?.text?.trim() || '';
     console.log('[sorteer] raw:', raw);
 
-    // Het model begint na de prefill met '[', dus we plakken dat er weer voor
-    const jsonStr = '[' + raw;
-    const items = JSON.parse(jsonStr);
+    // Verwijder eventuele markdown opmaak
+    const clean = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/,'').trim();
+    // Zoek de array
+    const match = clean.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('geen JSON array gevonden');
+    const items = JSON.parse(match[0]);
     if (!Array.isArray(items) || items.length === 0) throw new Error('lege array');
 
     for (const item of items) {
