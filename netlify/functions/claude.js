@@ -6,9 +6,7 @@ exports.handler = async (event) => {
   try {
     const body = JSON.parse(event.body);
 
-    // Log het payload voor debuggen
     console.log('[claude.js] payload keys:', Object.keys(body.payload || {}));
-    console.log('[claude.js] messages count:', body.payload?.messages?.length);
 
     // Anthropic API aanroep
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -21,7 +19,6 @@ exports.handler = async (event) => {
       body: JSON.stringify(body.payload)
     });
 
-    // Lees de response als tekst eerst, zodat we bij fouten de body kunnen loggen
     const responseText = await res.text();
     console.log('[claude.js] Anthropic status:', res.status);
     if (!res.ok) {
@@ -35,8 +32,9 @@ exports.handler = async (event) => {
 
     const data = JSON.parse(responseText);
 
-    // Supabase opslaan
+    // Supabase opslaan en id terugkrijgen
     let supabaseError = null;
+    let evalId = null;
     if (body.saveToSupabase) {
       const evaluatieTekst = data.content?.map(b => b.text || '').join('') || '';
 
@@ -46,7 +44,7 @@ exports.handler = async (event) => {
           'Content-Type': 'application/json',
           'apikey': process.env.SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          'Prefer': 'return=minimal'
+          'Prefer': 'return=representation'  // geeft de nieuwe rij terug incl. id
         },
         body: JSON.stringify({
           datum:           body.meta.datum          || null,
@@ -70,13 +68,16 @@ exports.handler = async (event) => {
         const errText = await supabaseRes.text();
         supabaseError = `Supabase ${supabaseRes.status}: ${errText}`;
         console.error('[claude.js] Supabase insert mislukt:', supabaseError);
+      } else {
+        const inserted = await supabaseRes.json();
+        evalId = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id;
       }
     }
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...data, supabaseError })
+      body: JSON.stringify({ ...data, supabaseError, evalId })
     };
 
   } catch (err) {
