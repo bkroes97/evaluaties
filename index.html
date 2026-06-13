@@ -336,7 +336,7 @@ async function sorteerMemo(tekst) {
   let raw = '';
   try {
     const json = await callClaude({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 1000,
       messages: [{
         role: 'user',
@@ -659,7 +659,7 @@ ${memoTekst}`;
   try {
     const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
     const json = await callClaude(
-      { model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] },
+      { model: 'claude-sonnet-4-5', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] },
       meta,
       true
     );
