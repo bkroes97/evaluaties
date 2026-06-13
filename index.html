@@ -191,7 +191,7 @@
   <div class="output-card" id="outputCard">
     <div class="output-label">
       <i class="ti ti-file-text"></i> Evaluatie
-      <span class="saved-badge" id="savedBadge" style="display:none;"><i class="ti ti-check"></i> Opgeslagen</span>
+      <span class="saved-badge" id="savedBadge" style="display:none;"><i class="ti ti-check"></i> Opgeslagen in database</span>
     </div>
     <div class="output-txt" id="outputTxt"></div>
     <div class="btn-row">
@@ -411,7 +411,6 @@ document.getElementById('editModal').addEventListener('click', e => {
 });
 
 function renderCat(cat) {
-  const m = CAT_META[cat];
   const items = memos[cat];
   const card = document.getElementById('cat-' + cat);
   if (!card) return;
@@ -638,17 +637,35 @@ ${memoTekst}`;
 
   try {
     const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
-    const json = await callClaude({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] }, meta, true);
+    const json = await callClaude(
+      { model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] },
+      meta,
+      true
+    );
+
     const output = json.content?.map(b => b.text || '').join('');
+    if (!output) throw new Error('Geen tekst ontvangen van de API.');
+
     document.getElementById('outputTxt').textContent = output;
     document.getElementById('outputCard').style.display = 'block';
-    document.getElementById('savedBadge').style.display = 'inline-flex';
     document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    if (json.supabaseError) {
+      document.getElementById('savedBadge').style.display = 'none';
+      showToast('⚠️ Evaluatie gegenereerd, maar opslaan in database mislukt.');
+      console.warn('Supabase fout:', json.supabaseError);
+    } else {
+      document.getElementById('savedBadge').style.display = 'inline-flex';
+      showToast('Evaluatie opgeslagen!');
+    }
   } catch(e) {
     alert('Er ging iets mis: ' + e.message);
   } finally {
-    spin.remove(); icon.style.display = ''; txt.textContent = 'Genereer evaluatie';
-    btn.disabled = false; updateGenBtn();
+    spin.remove();
+    icon.style.display = '';
+    txt.textContent = 'Genereer evaluatie';
+    btn.disabled = false;
+    updateGenBtn();
   }
 }
 
@@ -661,7 +678,10 @@ function copyOutput() {
   navigator.clipboard.writeText(getOutputTekst()).then(() => {
     document.getElementById('copyTxt').textContent = 'Gekopieerd!';
     document.getElementById('copyIcon').className = 'ti ti-check';
-    setTimeout(() => { document.getElementById('copyTxt').textContent = 'Kopieer tekst'; document.getElementById('copyIcon').className = 'ti ti-copy'; }, 2000);
+    setTimeout(() => {
+      document.getElementById('copyTxt').textContent = 'Kopieer tekst';
+      document.getElementById('copyIcon').className = 'ti ti-copy';
+    }, 2000);
   });
 }
 
