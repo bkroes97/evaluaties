@@ -394,6 +394,7 @@ function renderCard(e, i) {
         <button class="btn" onclick="kopieer(${i})"><i class="ti ti-copy" id="copy-icon-${i}"></i><span id="copy-txt-${i}">Kopieer</span></button>
         <button class="btn btn-green" onclick="download(${i})"><i class="ti ti-download"></i> Download .txt</button>
         <button class="btn" onclick="mail(${i})"><i class="ti ti-mail"></i> E-mail</button>
+        <button class="btn btn-red" onclick="verwijder(${i}, event)" style="margin-left:auto;background:var(--red-bg);color:var(--red-text);border-color:var(--red-text);"><i class="ti ti-trash"></i> Verwijderen</button>
       </div>
     </div>
   </div>`;
@@ -441,6 +442,34 @@ function mail(i) {
   const subject = encodeURIComponent(parts.join(' — '));
   const body = encodeURIComponent(e.evaluatie_tekst || '');
   window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+async function verwijder(i, event) {
+  event.stopPropagation();
+  const e = gefilterd[i];
+  const label = [e.locatie, e.datum].filter(Boolean).join(' — ') || 'deze evaluatie';
+  if (!confirm(`Evaluatie verwijderen: ${label}?`)) return;
+
+  const btn = event.currentTarget;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader"></i> Verwijderen...';
+
+  try {
+    const res = await fetch('/.netlify/functions/verwijder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: e.id })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    // Verwijder uit lokale array en herrender
+    alleEvaluaties = alleEvaluaties.filter(ev => ev.id !== e.id);
+    applyFilters();
+  } catch(err) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-trash"></i> Verwijderen';
+    alert('Verwijderen mislukt: ' + err.message);
+  }
 }
 
 // ── Helpers ──
