@@ -329,36 +329,52 @@ async function sorteerMemo(tekst) {
   try {
     const json = await callClaude({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 600,
-      messages: [{ role: 'user', content: `Splits deze gesproken memo van een nachtclubmanager op in losse fragmenten per categorie.
+      max_tokens: 800,
+      system: `Je bent een assistent die gesproken memo's van een nachtclubmanager categoriseert. Je geeft ALTIJD en ALLEEN een geldige JSON array terug. Geen uitleg, geen markdown, geen code-blokken. Alleen de array.`,
+      messages: [{ role: 'user', content: `Verdeel deze memo in fragmenten en ken aan elk fragment precies één categorie toe.
 
-Categorieën:
-- verloop: drukte, opbouw avond, tijden, bezoekersaantallen
-- algemeen: concept avond, opening, sluiting, algemene bijzonderheden
-- personeel: namen barmedewerkers, wie waar werkte, hoe ze het deden
-- dj: naam DJ, hoe de set was, muziek
-- lichten: naam lightjockey, hoe de lichten waren
-- veiligheid: naam portier, hoe de beveiliging was, incidenten
-- td: kapotte apparatuur, lampen stuk, geluidsproblemen
+CATEGORIEËN (gebruik exact deze sleutelwoorden):
+- "verloop"    → drukte, sfeer, bezoekersaantallen, opbouw/verloop van de avond, hoe laat het druk werd
+- "algemeen"   → concept van de avond, thema, bijzonderheden die nergens anders passen
+- "personeel"  → barmedewerkers, barpersoneel, wie achter de bar stond, hoe personeel functioneerde
+- "dj"         → DJ-namen, hoe de set was, muziekkeuze, optreden van de DJ
+- "lichten"    → lightjockey, lichtshow, sfeerverlichting, strobo, beamer
+- "veiligheid" → portiers, beveiligers, incidenten, vechtpartijen, uitsmijten, toegangscontrole
+- "td"         → technische dienst, geluidsinstallatie, kapotte apparatuur, microfoons, lampen stuk, storingen
+- "overig"     → alles wat echt nergens anders bij past
+
+REGELS:
+1. Splits de memo in zo specifiek mogelijke fragmenten — één onderwerp per fragment
+2. Kies altijd de MEEST SPECIFIEKE categorie (bijv. "Sebastiaan achter de bar" → personeel, niet algemeen)
+3. "overig" alleen als het echt nergens anders bij past
+4. Elk fragment moet de originele bewoording behouden
 
 Memo: "${tekst}"
 
-Geef ALLEEN een JSON array terug, geen uitleg, geen markdown:
-[{"cat":"personeel","tekst":"Sebastiaan stond achter de bar"},{"cat":"td","tekst":"De lampen zijn stuk"}]` }]
+Geef ALLEEN een JSON array, bijvoorbeeld:
+[{"cat":"personeel","tekst":"Sebastiaan stond achter de bar"},{"cat":"dj","tekst":"DJ Mark draaide een geweldige set"},{"cat":"td","tekst":"De subwoofer viel twee keer uit"}]` }]
     }, null, false);
 
     let raw = json.content?.[0]?.text?.trim() || '';
-    raw = raw.replace(/```json|```/g, '').trim();
+    // Verwijder eventuele markdown code-blokken
+    raw = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    // Pak de JSON array uit de response
     const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('geen JSON');
+    if (!match) throw new Error('Geen JSON array in response: ' + raw.substring(0, 100));
     const items = JSON.parse(match[0]);
-    if (!Array.isArray(items) || items.length === 0) { addMemo('algemeen', tekst); return; }
+    if (!Array.isArray(items) || items.length === 0) {
+      addMemo('overig', tekst);
+      return;
+    }
     for (const item of items) {
       if (!item.tekst?.trim()) continue;
-      addMemo(CATS.includes(item.cat) ? item.cat : 'algemeen', item.tekst.trim());
+      const cat = CATS.includes(item.cat) ? item.cat : 'overig';
+      addMemo(cat, item.tekst.trim());
     }
   } catch(e) {
-    addMemo('algemeen', tekst);
+    console.error('Sorteer fout:', e);
+    // Fallback: voeg de hele memo ongesplitst toe als overig
+    addMemo('overig', tekst);
   }
 }
 
