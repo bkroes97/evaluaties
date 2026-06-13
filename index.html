@@ -255,7 +255,14 @@ async function callClaude(payload, meta, saveToSupabase) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ payload, meta: meta || {}, saveToSupabase: !!saveToSupabase })
   });
-  return res.json();
+  const text = await res.text();
+  console.log('[callClaude] status:', res.status, '| body:', text.substring(0, 300));
+  if (!res.ok) throw new Error('Netlify function fout ' + res.status + ': ' + text.substring(0, 200));
+  try {
+    return JSON.parse(text);
+  } catch(e) {
+    throw new Error('Ongeldige JSON van function: ' + text.substring(0, 200));
+  }
 }
 
 // ── Spraakherkenning ──
@@ -330,36 +337,25 @@ async function sorteerMemo(tekst) {
   try {
     const json = await callClaude({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 800,
-      messages: [{
-        role: 'user',
-        content: `Je categoriseert nachtclub-memo's. Geef ALLEEN een JSON array terug, geen uitleg.
-
-Categorieën (gebruik exact deze sleutels):
-- verloop: drukte, sfeer, bezoekersaantallen, opbouw van de avond
-- algemeen: concept, thema, openingstijden, bijzonderheden
-- personeel: barmedewerkers, wie achter de bar stond, hoe personeel functioneerde
-- dj: DJ-naam, set, muziekkeuze
-- lichten: lightjockey, lichtshow, sfeer
-- veiligheid: portiers, incidenten, vechtpartijen, toegangscontrole
-- td: technische dienst, geluid, kapotte apparatuur, storingen
-- overig: past nergens anders
-
-Memo: ${JSON.stringify(tekst)}
-
-Antwoord met alleen een JSON array:
-[{"cat":"verloop","tekst":"..."},{"cat":"personeel","tekst":"..."}]`
-      }]
+      max_tokens: 1000,
+      messages: [
+        {
+          role: 'user',
+          content: 'Splits deze nachtclub-memo op in losse fragmenten per categorie en geef ALLEEN een JSON array terug. Geen uitleg, geen markdown, begin direct met [.\n\nCategorieën:\n- verloop: drukte, sfeer, bezoekersaantallen, opbouw avond\n- algemeen: concept, thema, openingstijden\n- personeel: barmedewerkers, wie achter de bar\n- dj: DJ-naam, set, muziek\n- lichten: lightjockey, lichtshow\n- veiligheid: portiers, incidenten, Code Rood, vechtpartijen\n- td: geluid, kapotte apparatuur, technische storingen\n- overig: past nergens anders\n\nMemo: ' + tekst + '\n\nGeef ALLEEN de JSON array, begin met ['
+        },
+        {
+          role: 'assistant',
+          content: '['
+        }
+      ]
     }, null, false);
 
     raw = json.content?.[0]?.text?.trim() || '';
     console.log('[sorteer] raw:', raw);
 
-    const clean = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
-    const match = clean.match(/\[\s*\{[\s\S]*\}\s*\]/);
-    if (!match) throw new Error('geen JSON array in: ' + clean.substring(0, 100));
-
-    const items = JSON.parse(match[0]);
+    // Het model begint na de prefill met '[', dus we plakken dat er weer voor
+    const jsonStr = '[' + raw;
+    const items = JSON.parse(jsonStr);
     if (!Array.isArray(items) || items.length === 0) throw new Error('lege array');
 
     for (const item of items) {
