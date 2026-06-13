@@ -33,19 +33,19 @@ exports.handler = async (event) => {
           'Prefer': 'return=minimal'
         },
         body: JSON.stringify({
-          datum:          body.meta.datum       || null,
-          locatie:        body.meta.locatie      || null,
-          manager:        body.meta.manager      || null,
-          opentijd:       body.meta.opentijd     || null,
-          sluittijd:      body.meta.sluittijd    || null,
-          memo_verloop:   body.meta.memo_verloop   || null,
-          memo_algemeen:  body.meta.memo_algemeen  || null,
-          memo_personeel: body.meta.memo_personeel || null,
-          memo_dj:        body.meta.memo_dj        || null,
-          memo_lichten:   body.meta.memo_lichten   || null,
-          memo_veiligheid:body.meta.memo_veiligheid|| null,
-          memo_td:        body.meta.memo_td        || null,
-          memo_overig:    body.meta.memo_overig    || null,
+          datum:           body.meta.datum         || null,
+          locatie:         body.meta.locatie        || null,
+          manager:         body.meta.manager        || null,
+          opentijd:        body.meta.opentijd       || null,
+          sluittijd:       body.meta.sluittijd      || null,
+          memo_verloop:    body.meta.memo_verloop   || null,
+          memo_algemeen:   body.meta.memo_algemeen  || null,
+          memo_personeel:  body.meta.memo_personeel || null,
+          memo_dj:         body.meta.memo_dj        || null,
+          memo_lichten:    body.meta.memo_lichten   || null,
+          memo_veiligheid: body.meta.memo_veiligheid|| null,
+          memo_td:         body.meta.memo_td        || null,
+          memo_overig:     body.meta.memo_overig    || null,
           evaluatie_tekst: evaluatieTekst
         })
       });
