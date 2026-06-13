@@ -60,9 +60,12 @@
     .cat-name { font-size: 13px; font-weight: 500; color: var(--text); }
     .cat-count { margin-left: auto; font-size: 11px; padding: 2px 7px; border-radius: 20px; background: var(--bg2); color: var(--text2); }
     .cat-count.has { background: var(--green-bg); color: var(--green-text); }
-    .memo-list { display: flex; flex-direction: column; gap: 5px; }
-    .memo-item { font-size: 12px; background: var(--bg2); border-radius: var(--radius); padding: 0; overflow: hidden; border: 0.5px solid transparent; }
+    .memo-list { display: flex; flex-direction: column; gap: 5px; min-height: 28px; }
+    .memo-item { font-size: 12px; background: var(--bg2); border-radius: var(--radius); padding: 0; overflow: hidden; border: 0.5px solid transparent; cursor: grab; user-select: none; }
     .memo-item.editing { border-color: var(--border2); }
+    .memo-item.dragging { opacity: 0.4; cursor: grabbing; }
+    .memo-item.drag-over { border-color: var(--blue-text); background: var(--blue-bg); }
+    .memo-list.drop-target { background: var(--blue-bg); border-radius: var(--radius); outline: 1.5px dashed var(--blue-text); }
     .memo-view { display: flex; gap: 6px; align-items: flex-start; padding: 6px 8px; }
     .memo-time { font-size: 11px; color: var(--text3); white-space: nowrap; margin-top: 1px; flex-shrink: 0; }
     .memo-txt { flex: 1; color: var(--text2); line-height: 1.5; cursor: pointer; }
@@ -491,17 +494,28 @@ function renderCat(cat) {
     list.innerHTML = '<span class="empty-hint">Nog geen memo\'s</span>';
   } else {
     list.innerHTML = items.map(m =>
-      `<div class="memo-item" id="memo-${m.id}">
+      `<div class="memo-item" id="memo-${m.id}" draggable="true"
+        ondragstart="onDragStart(event,'${cat}',${m.id})"
+        ondragend="onDragEnd(event)"
+        ondragover="onDragOver(event)"
+        ondragleave="onDragLeave(event)"
+        ondrop="onDrop(event,'${cat}',${m.id})">
         <div class="memo-view">
           <span class="memo-time">${m.tijd}</span>
           <span class="memo-txt" onclick="openEditModal('${cat}',${m.id})">${escHtml(m.tekst)}</span>
           <div class="memo-actions">
+            <span class="memo-icon-btn" style="cursor:grab;color:var(--text3);" title="Verslepen"><i class="ti ti-grip-vertical"></i></span>
             <span class="memo-icon-btn" onclick="openEditModal('${cat}',${m.id})" title="Bewerken"><i class="ti ti-pencil"></i></span>
             <span class="memo-icon-btn del" onclick="deleteMemo('${cat}',${m.id})" title="Verwijderen"><i class="ti ti-x"></i></span>
           </div>
         </div>
       </div>`
     ).join('');
+    // Touch drag voor mobiel
+    items.forEach(m => {
+      const el = document.getElementById('memo-' + m.id);
+      if (el) initTouchDrag(el, cat, m.id);
+    });
   }
 }
 
@@ -515,13 +529,83 @@ function buildCatsGrid() {
         <span class="cat-name">${m.label}</span>
         <span class="cat-count" id="cnt-${cat}">0</span>
       </div>
-      <div class="memo-list" id="list-${cat}"><span class="empty-hint">Nog geen memo's</span></div>
+      <div class="memo-list" id="list-${cat}"
+        ondragover="onListDragOver(event,'${cat}')"
+        ondragleave="onListDragLeave(event,'${cat}')"
+        ondrop="onListDrop(event,'${cat}')"><span class="empty-hint">Nog geen memo's</span></div>
       <div class="add-memo-row">
         <input class="add-memo-input" id="add-${cat}" placeholder="Typ hier een memo..." onkeydown="if(event.key==='Enter')addManualMemo('${cat}')" />
         <button class="add-memo-btn" onclick="addManualMemo('${cat}')"><i class="ti ti-plus"></i> Voeg toe</button>
       </div>
     </div>`;
   }).join('');
+}
+
+// ── Drag & Drop ──
+let dragCat = null;
+let dragId  = null;
+
+function onDragStart(event, cat, id) {
+  dragCat = cat; dragId = id;
+  event.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => {
+    const el = document.getElementById('memo-' + id);
+    if (el) el.classList.add('dragging');
+  }, 0);
+}
+
+function onDragEnd(event) {
+  document.querySelectorAll('.memo-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+  document.querySelectorAll('.memo-list').forEach(el => el.classList.remove('drop-target'));
+}
+
+function onDragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  event.currentTarget.classList.add('drag-over');
+}
+
+function onDragLeave(event) {
+  event.currentTarget.classList.remove('drag-over');
+}
+
+function onDrop(event, targetCat, targetId) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.currentTarget.classList.remove('drag-over');
+  if (dragCat === null || dragId === null) return;
+  moveMemo(dragCat, dragId, targetCat);
+  dragCat = null; dragId = null;
+}
+
+function onListDragOver(event, cat) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  document.getElementById('list-' + cat)?.classList.add('drop-target');
+}
+
+function onListDragLeave(event, cat) {
+  document.getElementById('list-' + cat)?.classList.remove('drop-target');
+}
+
+function onListDrop(event, targetCat) {
+  event.preventDefault();
+  document.getElementById('list-' + targetCat)?.classList.remove('drop-target');
+  if (dragCat === null || dragId === null) return;
+  moveMemo(dragCat, dragId, targetCat);
+  dragCat = null; dragId = null;
+}
+
+function moveMemo(fromCat, id, toCat) {
+  if (fromCat === toCat) return;
+  const idx = memos[fromCat].findIndex(m => m.id === id);
+  if (idx === -1) return;
+  const [memo] = memos[fromCat].splice(idx, 1);
+  memos[toCat].push(memo);
+  renderCat(fromCat);
+  renderCat(toCat);
+  updateGenBtn();
+  showToast(`Memo verplaatst naar ${CAT_META[toCat].label}`);
 }
 
 function updateGenBtn() {
@@ -861,6 +945,54 @@ function updateOnderwerp() {
   if (!huidig || huidig.startsWith('Evaluatie ')) {
     document.getElementById('onderwerp').value = `Evaluatie ${locatie} ${datumNl}`;
   }
+}
+
+// ── Touch drag voor mobiel ──
+let touchDragCat = null, touchDragId = null, touchClone = null, touchOriginEl = null;
+
+function initTouchDrag(el, cat, id) {
+  el.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    touchDragCat = cat; touchDragId = id; touchOriginEl = el;
+    el.classList.add('dragging');
+    // Maak een visuele clone
+    touchClone = el.cloneNode(true);
+    touchClone.style.cssText = `position:fixed;pointer-events:none;opacity:0.85;z-index:999;width:${el.offsetWidth}px;transform:scale(1.03);box-shadow:0 4px 16px rgba(0,0,0,0.18);`;
+    document.body.appendChild(touchClone);
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    if (!touchClone) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    touchClone.style.left = (t.clientX - touchClone.offsetWidth / 2) + 'px';
+    touchClone.style.top  = (t.clientY - 24) + 'px';
+    // Highlight drop target
+    touchClone.style.display = 'none';
+    const under = document.elementFromPoint(t.clientX, t.clientY);
+    touchClone.style.display = '';
+    document.querySelectorAll('.memo-list').forEach(l => l.classList.remove('drop-target'));
+    const list = under?.closest('.memo-list');
+    if (list) list.classList.add('drop-target');
+  }, { passive: false });
+
+  el.addEventListener('touchend', e => {
+    if (!touchClone) return;
+    const t = e.changedTouches[0];
+    touchClone.remove(); touchClone = null;
+    touchOriginEl?.classList.remove('dragging');
+    document.querySelectorAll('.memo-list').forEach(l => l.classList.remove('drop-target'));
+    // Zoek het drop target
+    const under = document.elementFromPoint(t.clientX, t.clientY);
+    const list = under?.closest('.memo-list');
+    if (list) {
+      const targetCat = list.id.replace('list-', '');
+      if (targetCat && CATS.includes(targetCat)) {
+        moveMemo(touchDragCat, touchDragId, targetCat);
+      }
+    }
+    touchDragCat = null; touchDragId = null; touchOriginEl = null;
+  });
 }
 
 // ── Init ──
