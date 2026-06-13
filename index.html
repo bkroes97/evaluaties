@@ -152,11 +152,11 @@
   <div class="topbar">
     <div class="topbar-group">
       <span class="topbar-label">Datum:</span>
-      <input type="date" id="datum" />
+      <input type="date" id="datum" onchange="updateOnderwerp()" />
     </div>
     <div class="topbar-group">
       <span class="topbar-label">Locatie:</span>
-      <select id="locatie" style="font-family:inherit;font-size:13px;padding:5px 9px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);flex:1;min-width:0;">
+      <select id="locatie" onchange="updateOnderwerp()" style="font-family:inherit;font-size:13px;padding:5px 9px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);flex:1;min-width:0;">
         <option value="">— Kies locatie —</option>
         <option>Café Van Buren</option>
         <option>Club Rolluik</option>
@@ -263,6 +263,7 @@ let currentInterim = '';
 let memoId = 0;
 let editModalCat = null;
 let editModalId = null;
+let currentEvalId = null;
 
 // ── Tijdshulp ──
 function timeNow() {
@@ -541,6 +542,7 @@ function setFormData(data) {
     renderCat(cat);
   }
   updateGenBtn();
+  currentEvalId = null;
   document.getElementById('outputCard').style.display = 'none';
 }
 
@@ -689,6 +691,7 @@ ${memoTekst}`;
     const output = json.content?.map(b => b.text || '').join('');
     if (!output) throw new Error('Geen tekst ontvangen van de API.');
 
+    currentEvalId = json.evalId || null;
     document.getElementById('outputTxt').textContent = output;
     document.getElementById('outputCard').style.display = 'block';
     document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -741,38 +744,46 @@ async function saveEdit() {
   const tekst = document.getElementById('outputEdit').value.trim();
   if (!tekst) return;
 
-  // Update de weergave
   document.getElementById('outputTxt').textContent = tekst;
   cancelEdit();
 
-  // Sla op in Supabase via claude.js (saveToSupabase met alleen de tekst)
   const icon = document.getElementById('saveEditIcon');
   const txt = document.getElementById('saveEditTxt');
   icon.className = 'ti ti-loader';
   txt.textContent = 'Opslaan...';
 
   try {
-    const datum     = document.getElementById('datum').value;
-    const locatie   = document.getElementById('locatie').value;
-    const naam      = document.getElementById('naamInput').value.trim() || 'Manager';
-    const open      = document.getElementById('openTijd').value;
-    const sluit     = document.getElementById('sluitTijd').value;
-
+    const datum   = document.getElementById('datum').value;
+    const locatie = document.getElementById('locatie').value;
+    const naam    = document.getElementById('naamInput').value.trim() || 'Manager';
+    const open    = document.getElementById('openTijd').value;
+    const sluit   = document.getElementById('sluitTijd').value;
     const memoMeta = {};
     for (const cat of CATS) {
       memoMeta['memo_' + cat] = memos[cat].map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
     }
     const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
 
-    // Stuur de bewerkte tekst als evaluatie_tekst naar Supabase
-    await fetch('/.netlify/functions/opslaan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ evaluatie_tekst: tekst, meta })
-    });
-
+    if (currentEvalId) {
+      // PATCH: overschrijf bestaande rij
+      await fetch('/.netlify/functions/opslaan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentEvalId, evaluatie_tekst: tekst, meta })
+      });
+      showToast('Evaluatie bijgewerkt!');
+    } else {
+      // Nieuwe rij
+      const res = await fetch('/.netlify/functions/opslaan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ evaluatie_tekst: tekst, meta })
+      });
+      const data = await res.json();
+      if (data.id) currentEvalId = data.id;
+      showToast('Evaluatie opgeslagen!');
+    }
     document.getElementById('savedBadge').style.display = 'inline-flex';
-    showToast('Bewerkte evaluatie opgeslagen!');
   } catch(e) {
     showToast('Opslaan mislukt: ' + e.message);
   } finally {
@@ -814,6 +825,19 @@ function openMail() {
   const subject = encodeURIComponent(subjectParts.join(' — '));
   const body = encodeURIComponent(tekst);
   window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+// ── Onderwerp auto-invullen ──
+function updateOnderwerp() {
+  const locatie = document.getElementById('locatie').value;
+  const datum   = document.getElementById('datum').value;
+  if (!locatie || !datum) return;
+  const datumNl = new Date(datum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+  const huidig  = document.getElementById('onderwerp').value;
+  // Alleen overschrijven als het leeg is of als het al een auto-gegenereerde waarde heeft
+  if (!huidig || huidig.startsWith('Evaluatie ')) {
+    document.getElementById('onderwerp').value = `Evaluatie ${locatie} ${datumNl}`;
+  }
 }
 
 // ── Init ──
