@@ -132,7 +132,7 @@
     <h1>Avondevaluatie</h1>
     <div class="header-btns">
       <a href="/dashboard.html" class="btn"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
-      <button class="btn" onclick="saveProgress()"><i class="ti ti-device-floppy"></i> Opslaan</button>
+      <button class="btn" id="saveBtn" onclick="saveProgress()"><i class="ti ti-device-floppy" id="saveBtnIcon"></i> <span id="saveBtnTxt">Opslaan</span></button>
       <button class="btn" onclick="newAvond()"><i class="ti ti-plus"></i> Nieuwe avond</button>
     </div>
   </div>
@@ -148,18 +148,18 @@
 
   <!-- Onderwerp -->
   <div style="margin-bottom:1rem;">
-    <input type="text" id="onderwerp" placeholder="Onderwerp / naam van deze avond, bijv. 'Vrijdagnacht techno editie'" style="width:100%;font-family:inherit;font-size:16px;font-weight:500;padding:10px 14px;border-radius:var(--radius-lg);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);" />
+    <input type="text" id="onderwerp" oninput="scheduleAutoSave()" placeholder="Onderwerp / naam van deze avond, bijv. 'Vrijdagnacht techno editie'" style="width:100%;font-family:inherit;font-size:16px;font-weight:500;padding:10px 14px;border-radius:var(--radius-lg);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);" />
   </div>
 
   <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-group">
       <span class="topbar-label">Datum:</span>
-      <input type="date" id="datum" onchange="updateOnderwerp()" />
+      <input type="date" id="datum" onchange="updateOnderwerp()" onchange="updateOnderwerp();scheduleAutoSave()" />
     </div>
     <div class="topbar-group">
       <span class="topbar-label">Locatie:</span>
-      <select id="locatie" onchange="updateOnderwerp()" style="font-family:inherit;font-size:13px;padding:5px 9px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);flex:1;min-width:0;">
+      <select id="locatie" onchange="updateOnderwerp();scheduleAutoSave()" style="font-family:inherit;font-size:13px;padding:5px 9px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);flex:1;min-width:0;">
         <option value="">— Kies locatie —</option>
         <option>Café Van Buren</option>
         <option>Club Rolluik</option>
@@ -174,7 +174,7 @@
     </div>
     <div class="topbar-group">
       <span class="topbar-label">Open:</span>
-      <input type="time" id="openTijd" value="23:00" />
+      <input type="time" id="openTijd" onchange="scheduleAutoSave()" value="23:00" />
     </div>
     <div class="topbar-group">
       <span class="topbar-label">Sluit:</span>
@@ -438,6 +438,7 @@ function addMemo(cat, tekst) {
   memos[cat].push({ id, tekst, tijd: timeNow() });
   renderCat(cat);
   updateGenBtn();
+  scheduleAutoSave();
 }
 
 function addManualMemo(cat) {
@@ -452,6 +453,7 @@ function deleteMemo(cat, id) {
   memos[cat] = memos[cat].filter(m => m.id !== id);
   renderCat(cat);
   updateGenBtn();
+  scheduleAutoSave();
 }
 
 function openEditModal(cat, id) {
@@ -469,6 +471,7 @@ function saveEditModal() {
   const memo = memos[editModalCat].find(m => m.id === editModalId);
   if (memo) { memo.tekst = tekst; renderCat(editModalCat); }
   closeEditModal();
+  scheduleAutoSave();
 }
 
 function closeEditModal() {
@@ -605,6 +608,7 @@ function moveMemo(fromCat, id, toCat) {
   renderCat(fromCat);
   renderCat(toCat);
   updateGenBtn();
+  scheduleAutoSave();
   showToast(`Memo verplaatst naar ${CAT_META[toCat].label}`);
 }
 
@@ -660,12 +664,43 @@ function saveKey(datum, locatie, onderwerp) {
   return `eval_${d}_${l}${o ? '_' + o : ''}`;
 }
 
-function saveProgress() {
+let autoSaveTimer = null;
+let lastSavedKey = null;
+
+function saveProgress(silent = false) {
   const data = getFormData();
   const key = saveKey(data.datum, data.locatie, data.onderwerp);
   localStorage.setItem(key, JSON.stringify(data));
-  populateSavedList(key);
-  showToast('Opgeslagen!');
+  // Als de key veranderd is (bijv. nieuwe locatie/datum), update de lijst
+  if (key !== lastSavedKey) {
+    populateSavedList(key);
+    lastSavedKey = key;
+  }
+  // Update save button
+  const icon = document.getElementById('saveBtnIcon');
+  const txt  = document.getElementById('saveBtnTxt');
+  if (icon) icon.className = 'ti ti-check';
+  if (txt)  txt.textContent = 'Opgeslagen';
+  clearTimeout(window._saveBtnTimer);
+  window._saveBtnTimer = setTimeout(() => {
+    if (icon) icon.className = 'ti ti-device-floppy';
+    if (txt)  txt.textContent = 'Opslaan';
+  }, 2000);
+  if (!silent) showToast('Opgeslagen!');
+}
+
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  // Alleen autosaven als er iets zinvols is ingevuld
+  const data = getFormData();
+  const heeftContent = data.datum || data.locatie || CATS.some(c => memos[c].length > 0);
+  if (!heeftContent) return;
+  // Toon 'Wijzigingen...' in de knop
+  const icon = document.getElementById('saveBtnIcon');
+  const txt  = document.getElementById('saveBtnTxt');
+  if (icon) icon.className = 'ti ti-dots';
+  if (txt)  txt.textContent = 'Wijzigingen...';
+  autoSaveTimer = setTimeout(() => { saveProgress(true); }, 2000);
 }
 
 function populateSavedList(selectKey) {
@@ -1000,6 +1035,25 @@ buildCatsGrid();
 initRec();
 document.getElementById('datum').value = new Date().toISOString().split('T')[0];
 populateSavedList();
+
+// Herstel automatisch de meest recente avond bij opstarten
+(function herstelLaatste() {
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('eval_')).sort().reverse();
+  if (keys.length > 0) {
+    const raw = localStorage.getItem(keys[0]);
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        const heeftContent = data.datum || data.locatie || Object.values(data.memos || {}).some(arr => arr.length > 0);
+        if (heeftContent) {
+          setFormData(data);
+          lastSavedKey = keys[0];
+          document.getElementById('savedSelect').value = keys[0];
+        }
+      } catch(e) {}
+    }
+  }
+})();
 </script>
 </body>
 </html>
