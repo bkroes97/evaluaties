@@ -289,13 +289,17 @@ async function callClaude(payload, meta, saveToSupabase) {
 }
 
 // ── Spraakherkenning ──
+// Detecteer iOS — op iOS/Safari werkt continuous:true niet
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
 function initRec() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { document.getElementById('noSupport').style.display = 'block'; return false; }
   recognition = new SR();
   recognition.lang = 'nl-NL';
-  recognition.continuous = true;
+  recognition.continuous = !isIOS;   // iOS: false, anders: true
   recognition.interimResults = true;
+
   recognition.onresult = (e) => {
     let interim = '', final = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -305,13 +309,32 @@ function initRec() {
     }
     if (final) currentFinal += final;
     currentInterim = interim;
-    document.getElementById('interimTxt').textContent = interim || currentFinal;
+    document.getElementById('interimTxt').textContent = (interim || currentFinal).trim();
   };
+
   recognition.onerror = (e) => {
-    if (!isStopping) { document.getElementById('micStatus').textContent = 'Fout: ' + e.error; resetMicUI(); }
+    // 'no-speech' en 'aborted' zijn geen echte fouten op mobiel — gewoon herstarten
+    if (e.error === 'no-speech' || e.error === 'aborted') {
+      if (isRecording && !isStopping) restartRec();
+      return;
+    }
+    if (!isStopping) {
+      console.warn('[mic] fout:', e.error);
+      document.getElementById('micStatus').textContent = 'Fout: ' + e.error;
+      resetMicUI();
+    }
   };
-  recognition.onend = () => { if (isRecording && !isStopping) recognition.start(); };
+
+  recognition.onend = () => {
+    // Altijd herstarten zolang we opnemen (iOS stopt na elke utterance)
+    if (isRecording && !isStopping) restartRec();
+  };
+
   return true;
+}
+
+function restartRec() {
+  try { recognition.start(); } catch(e) { /* al actief, negeer */ }
 }
 
 function toggleRec() {
@@ -322,7 +345,7 @@ function toggleRec() {
 function startRec() {
   currentFinal = ''; currentInterim = '';
   isRecording = true; isStopping = false;
-  recognition.start();
+  try { recognition.start(); } catch(e) { /* al actief */ }
   document.getElementById('micBtn').classList.add('recording');
   document.getElementById('micIcon').className = 'ti ti-player-stop';
   document.getElementById('micStatus').textContent = 'Opname bezig — druk nogmaals om op te slaan';
@@ -333,7 +356,7 @@ function startRec() {
 async function saveAndStop() {
   isStopping = true; isRecording = false;
   const tekst = (currentFinal + ' ' + currentInterim).trim();
-  recognition.stop();
+  try { recognition.stop(); } catch(e) { /* al gestopt */ }
   resetMicUI();
   if (tekst) {
     document.getElementById('micStatus').textContent = 'Memo verwerken...';
