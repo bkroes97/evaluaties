@@ -107,6 +107,9 @@
     .saved-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; background: var(--green-bg); color: var(--green-text); padding: 2px 8px; border-radius: 20px; }
     .output-txt { font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; background: var(--bg2); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
     .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .output-edit { width: 100%; font-family: inherit; font-size: 14px; line-height: 1.8; color: var(--text); background: var(--bg2); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; border: 1.5px solid var(--border2); resize: vertical; min-height: 300px; display: none; }
+    .btn-amber { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber-text); }
+    .btn-amber:hover { opacity: 0.85; }
 
     /* Modal */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
@@ -204,12 +207,19 @@
     <div class="output-label">
       <i class="ti ti-file-text"></i> Evaluatie
       <span class="saved-badge" id="savedBadge" style="display:none;"><i class="ti ti-check"></i> Opgeslagen in database</span>
+      <span id="editBadge" style="display:none;margin-left:4px;font-size:11px;background:var(--amber-bg);color:var(--amber-text);padding:2px 8px;border-radius:20px;"><i class="ti ti-pencil"></i> Bewerkmode</span>
     </div>
     <div class="output-txt" id="outputTxt"></div>
-    <div class="btn-row">
+    <textarea class="output-edit" id="outputEdit" placeholder="Bewerk de evaluatie hier..."></textarea>
+    <div class="btn-row" id="viewBtns">
+      <button class="btn btn-amber" onclick="startEdit()"><i class="ti ti-pencil"></i> Bewerken</button>
       <button class="btn" onclick="copyOutput()"><i class="ti ti-copy" id="copyIcon"></i><span id="copyTxt">Kopieer tekst</span></button>
       <button class="btn btn-green" onclick="downloadTxt()"><i class="ti ti-download"></i> Download .txt</button>
       <button class="btn" onclick="openMail()"><i class="ti ti-mail"></i> Open in e-mail</button>
+    </div>
+    <div class="btn-row" id="editBtns" style="display:none;">
+      <button class="btn btn-primary" onclick="saveEdit()"><i class="ti ti-device-floppy" id="saveEditIcon"></i><span id="saveEditTxt">Opslaan</span></button>
+      <button class="btn" onclick="cancelEdit()"><i class="ti ti-x"></i> Annuleren</button>
     </div>
   </div>
 </div>
@@ -707,6 +717,70 @@ function getOutputTekst() {
   return document.getElementById('outputTxt').textContent;
 }
 
+// ── Bewerken ──
+function startEdit() {
+  const tekst = getOutputTekst();
+  document.getElementById('outputEdit').value = tekst;
+  document.getElementById('outputTxt').style.display = 'none';
+  document.getElementById('outputEdit').style.display = 'block';
+  document.getElementById('viewBtns').style.display = 'none';
+  document.getElementById('editBtns').style.display = 'flex';
+  document.getElementById('editBadge').style.display = 'inline-flex';
+  document.getElementById('outputEdit').focus();
+}
+
+function cancelEdit() {
+  document.getElementById('outputEdit').style.display = 'none';
+  document.getElementById('outputTxt').style.display = 'block';
+  document.getElementById('viewBtns').style.display = 'flex';
+  document.getElementById('editBtns').style.display = 'none';
+  document.getElementById('editBadge').style.display = 'none';
+}
+
+async function saveEdit() {
+  const tekst = document.getElementById('outputEdit').value.trim();
+  if (!tekst) return;
+
+  // Update de weergave
+  document.getElementById('outputTxt').textContent = tekst;
+  cancelEdit();
+
+  // Sla op in Supabase via claude.js (saveToSupabase met alleen de tekst)
+  const icon = document.getElementById('saveEditIcon');
+  const txt = document.getElementById('saveEditTxt');
+  icon.className = 'ti ti-loader';
+  txt.textContent = 'Opslaan...';
+
+  try {
+    const datum     = document.getElementById('datum').value;
+    const locatie   = document.getElementById('locatie').value;
+    const naam      = document.getElementById('naamInput').value.trim() || 'Manager';
+    const open      = document.getElementById('openTijd').value;
+    const sluit     = document.getElementById('sluitTijd').value;
+
+    const memoMeta = {};
+    for (const cat of CATS) {
+      memoMeta['memo_' + cat] = memos[cat].map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
+    }
+    const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
+
+    // Stuur de bewerkte tekst als evaluatie_tekst naar Supabase
+    await fetch('/.netlify/functions/opslaan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ evaluatie_tekst: tekst, meta })
+    });
+
+    document.getElementById('savedBadge').style.display = 'inline-flex';
+    showToast('Bewerkte evaluatie opgeslagen!');
+  } catch(e) {
+    showToast('Opslaan mislukt: ' + e.message);
+  } finally {
+    icon.className = 'ti ti-device-floppy';
+    txt.textContent = 'Opslaan';
+  }
+}
+
 function copyOutput() {
   navigator.clipboard.writeText(getOutputTekst()).then(() => {
     document.getElementById('copyTxt').textContent = 'Gekopieerd!';
@@ -721,7 +795,7 @@ function copyOutput() {
 function downloadTxt() {
   const tekst = getOutputTekst();
   const datum = document.getElementById('datum').value || 'evaluatie';
-  const locatie = document.getElementById('locatie').value.trim().replace(/\s+/g, '-') || 'club';
+  const locatie = document.getElementById('locatie').value.replace(/\s+/g, '-') || 'club';
   const onderwerp = document.getElementById('onderwerp').value.trim().replace(/\s+/g, '-') || '';
   const naam = [onderwerp, datum, locatie].filter(Boolean).join('-');
   const blob = new Blob([tekst], { type: 'text/plain;charset=utf-8' });
@@ -734,7 +808,7 @@ function downloadTxt() {
 function openMail() {
   const tekst = getOutputTekst();
   const datum = document.getElementById('datum').value || '';
-  const locatie = document.getElementById('locatie').value.trim() || '';
+  const locatie = document.getElementById('locatie').value || '';
   const onderwerp = document.getElementById('onderwerp').value.trim() || '';
   const subjectParts = ['Avondevaluatie', onderwerp, locatie, datum].filter(Boolean);
   const subject = encodeURIComponent(subjectParts.join(' — '));
