@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evaluatie Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefed;
+      --text: #1a1a1a; --text2: #666660; --text3: #999993;
+      --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+      --radius: 8px; --radius-lg: 12px;
+      --green-bg: #eaf3de; --green-text: #3b6d11;
+      --blue-bg: #e6f1fb; --blue-text: #0c447c;
+      --amber-bg: #faeeda; --amber-text: #633806;
+      --red-bg: #fcebeb; --red-text: #a32d2d;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c; --bg2: #272725; --bg3: #2f2f2d;
+        --text: #f0f0ee; --text2: #aaaaaa; --text3: #666660;
+        --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+        --green-bg: #173404; --green-text: #c0dd97;
+        --blue-bg: #042c53; --blue-text: #b5d4f4;
+        --amber-bg: #412402; --amber-text: #fac775;
+        --red-bg: #501313; --red-text: #f09595;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg3);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .container { max-width: 860px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    h1 { font-size: 20px; font-weight: 500; }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 13px; color: var(--text2); text-decoration: none;
+      padding: 6px 12px; border: 0.5px solid var(--border2);
+      border-radius: var(--radius); background: var(--bg);
+      transition: background 0.15s;
+    }
+    .back-btn:hover { background: var(--bg2); }
+
+    /* Filter bar */
+    .filterbar {
+      background: var(--bg); border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg); padding: 12px 14px;
+      margin-bottom: 1rem; display: flex; gap: 10px; align-items: center;
+      flex-wrap: wrap;
+    }
+    .filterbar label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+    .filterbar select, .filterbar input {
+      font-family: inherit; font-size: 13px; padding: 6px 10px;
+      border-radius: var(--radius); border: 0.5px solid var(--border2);
+      background: var(--bg2); color: var(--text); flex: 1; min-width: 0;
+    }
+    .filter-group { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 160px; }
+    .count-badge {
+      font-size: 12px; padding: 3px 10px; border-radius: 20px;
+      background: var(--bg2); color: var(--text2); white-space: nowrap;
+      margin-left: auto;
+    }
+    .count-badge.has { background: var(--green-bg); color: var(--green-text); }
+
+    /* Stats row */
+    .stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px; margin-bottom: 1rem;
+    }
+    .stat-card {
+      background: var(--bg); border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg); padding: 12px 14px;
+    }
+    .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+    .stat-value { font-size: 22px; font-weight: 500; color: var(--text); }
+
+    /* Evaluatie lijst */
+    .eval-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .eval-card {
+      background: var(--bg); border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+    }
+    .eval-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; cursor: pointer;
+      transition: background 0.12s;
+    }
+    .eval-header:hover { background: var(--bg2); }
+    .eval-date {
+      font-size: 13px; font-weight: 500; color: var(--text);
+      white-space: nowrap;
+    }
+    .eval-locatie {
+      font-size: 12px; color: var(--text2);
+      background: var(--bg2); padding: 2px 8px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .eval-manager { font-size: 12px; color: var(--text3); flex: 1; }
+    .eval-tijd { font-size: 12px; color: var(--text3); white-space: nowrap; }
+    .eval-chevron {
+      font-size: 14px; color: var(--text3);
+      transition: transform 0.2s; flex-shrink: 0;
+    }
+    .eval-card.open .eval-chevron { transform: rotate(180deg); }
+
+    .eval-body { display: none; border-top: 0.5px solid var(--border); }
+    .eval-card.open .eval-body { display: block; }
+
+    .eval-tekst {
+      font-size: 13px; line-height: 1.8; color: var(--text);
+      white-space: pre-wrap; padding: 14px;
+      background: var(--bg2);
+    }
+    .eval-actions {
+      display: flex; gap: 8px; padding: 10px 14px;
+      border-top: 0.5px solid var(--border); flex-wrap: wrap;
+    }
+    .btn {
+      padding: 6px 12px; font-size: 12px; border: 0.5px solid var(--border2);
+      border-radius: var(--radius); background: var(--bg); color: var(--text2);
+      cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+      transition: background 0.15s; font-family: inherit;
+    }
+    .btn:hover { background: var(--bg2); }
+    .btn-green { background: var(--green-bg); color: var(--green-text); border-color: var(--green-text); }
+    .btn-green:hover { opacity: 0.85; }
+
+    /* Memo tabs in detail */
+    .memo-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; padding: 14px; background: var(--bg);
+    }
+    @media (max-width: 560px) { .memo-grid { grid-template-columns: 1fr; } }
+    .memo-block { background: var(--bg2); border-radius: var(--radius); padding: 10px 12px; }
+    .memo-block-label {
+      font-size: 11px; font-weight: 500; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 5px;
+    }
+    .memo-block-tekst { font-size: 12px; color: var(--text2); line-height: 1.6; }
+    .memo-block-tekst.empty { font-style: italic; color: var(--text3); }
+
+    /* Tabs: evaluatietekst vs memo's */
+    .tab-bar {
+      display: flex; gap: 0; border-bottom: 0.5px solid var(--border);
+      background: var(--bg);
+    }
+    .tab-btn {
+      padding: 9px 14px; font-size: 12px; color: var(--text2);
+      background: none; border: none; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      font-family: inherit; transition: color 0.15s;
+    }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* States */
+    .loading, .empty, .error {
+      text-align: center; padding: 3rem 1rem;
+      font-size: 14px; color: var(--text3);
+    }
+    .error { color: var(--red-text); }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border2); border-top-color: var(--text);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .eval-card { animation: fadein 0.2s ease; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-left">
+      <a href="/" class="back-btn"><i class="ti ti-arrow-left"></i> Terug</a>
+      <h1>Evaluaties</h1>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filterbar">
+    <div class="filter-group">
+      <label>Locatie</label>
+      <select id="filterLocatie" onchange="applyFilters()">
+        <option value="">Alle locaties</option>
+        <option>Café Van Buren</option>
+        <option>Club Rolluik</option>
+        <option>BAR 2</option>
+        <option>De Drie Gezusters</option>
+        <option>Heidi's Skihut</option>
+        <option>De Kunstbar</option>
+        <option>Club Novia</option>
+        <option>De Bieb</option>
+        <option>Stadsgarderobe 024</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Manager</label>
+      <select id="filterManager" onchange="applyFilters()">
+        <option value="">Alle managers</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Zoeken</label>
+      <input type="text" id="filterZoek" placeholder="Zoek in evaluaties..." oninput="applyFilters()" />
+    </div>
+    <span class="count-badge" id="countBadge">—</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats" id="statsRow" style="display:none;">
+    <div class="stat-card">
+      <div class="stat-label">Evaluaties</div>
+      <div class="stat-value" id="statTotaal">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Locaties</div>
+      <div class="stat-value" id="statLocaties">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Managers</div>
+      <div class="stat-value" id="statManagers">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Meest actief</div>
+      <div class="stat-value" id="statMeest" style="font-size:14px; padding-top:4px;">—</div>
+    </div>
+  </div>
+
+  <!-- Lijst -->
+  <div class="eval-list" id="evalList">
+    <div class="loading">
+      <div class="spinner"></div>
+      Evaluaties laden...
+    </div>
+  </div>
+
+</div>
+
+<script>
+const LOCATIES = [
+  'Café Van Buren','Club Rolluik','BAR 2','De Drie Gezusters',
+  "Heidi's Skihut",'De Kunstbar','Club Novia','De Bieb','Stadsgarderobe 024'
+];
+
+const CAT_META = {
+  memo_verloop:    { label: 'Verloop',    icon: 'ti-chart-line' },
+  memo_algemeen:   { label: 'Algemeen',   icon: 'ti-info-circle' },
+  memo_personeel:  { label: 'Personeel',  icon: 'ti-users' },
+  memo_dj:         { label: "DJ's",       icon: 'ti-music' },
+  memo_lichten:    { label: 'Lichten',    icon: 'ti-bulb' },
+  memo_veiligheid: { label: 'Veiligheid', icon: 'ti-shield' },
+  memo_td:         { label: 'TD',         icon: 'ti-tool' },
+  memo_overig:     { label: 'Overig',     icon: 'ti-dots-circle-horizontal' }
+};
+
+let alleEvaluaties = [];
+let gefilterd = [];
+
+// ── Data laden via Netlify function ──
+async function laadEvaluaties() {
+  try {
+    const res = await fetch('/.netlify/functions/evaluaties');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    alleEvaluaties = data || [];
+    vulManagerFilter();
+    updateStats(alleEvaluaties);
+    applyFilters();
+  } catch(e) {
+    document.getElementById('evalList').innerHTML =
+      `<div class="error"><i class="ti ti-alert-circle"></i> Kon evaluaties niet laden: ${e.message}</div>`;
+  }
+}
+
+function vulManagerFilter() {
+  const managers = [...new Set(alleEvaluaties.map(e => e.manager).filter(Boolean))].sort();
+  const sel = document.getElementById('filterManager');
+  managers.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m;
+    sel.appendChild(opt);
+  });
+}
+
+// ── Filters ──
+function applyFilters() {
+  const locatie = document.getElementById('filterLocatie').value;
+  const manager = document.getElementById('filterManager').value;
+  const zoek    = document.getElementById('filterZoek').value.toLowerCase().trim();
+
+  gefilterd = alleEvaluaties.filter(e => {
+    if (locatie && e.locatie !== locatie) return false;
+    if (manager && e.manager !== manager) return false;
+    if (zoek) {
+      const haystack = [e.evaluatie_tekst, e.manager, e.locatie, e.datum,
+        ...Object.keys(CAT_META).map(k => e[k])].join(' ').toLowerCase();
+      if (!haystack.includes(zoek)) return false;
+    }
+    return true;
+  });
+
+  // Sorteer nieuwste eerst
+  gefilterd.sort((a, b) => new Date(b.created_at || b.datum) - new Date(a.created_at || a.datum));
+
+  const badge = document.getElementById('countBadge');
+  badge.textContent = gefilterd.length + ' resultaten';
+  badge.className = 'count-badge' + (gefilterd.length > 0 ? ' has' : '');
+
+  updateStats(gefilterd);
+  renderLijst();
+}
+
+function updateStats(lijst) {
+  const statsRow = document.getElementById('statsRow');
+  if (lijst.length === 0) { statsRow.style.display = 'none'; return; }
+  statsRow.style.display = 'grid';
+
+  document.getElementById('statTotaal').textContent = lijst.length;
+
+  const locaties = new Set(lijst.map(e => e.locatie).filter(Boolean));
+  document.getElementById('statLocaties').textContent = locaties.size;
+
+  const managers = new Set(lijst.map(e => e.manager).filter(Boolean));
+  document.getElementById('statManagers').textContent = managers.size;
+
+  // Meest actieve locatie
+  const freq = {};
+  lijst.forEach(e => { if (e.locatie) freq[e.locatie] = (freq[e.locatie] || 0) + 1; });
+  const meest = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('statMeest').textContent = meest ? meest[0] : '—';
+}
+
+// ── Renderen ──
+function renderLijst() {
+  const lijst = document.getElementById('evalList');
+  if (gefilterd.length === 0) {
+    lijst.innerHTML = '<div class="empty"><i class="ti ti-inbox"></i><br>Geen evaluaties gevonden</div>';
+    return;
+  }
+  lijst.innerHTML = gefilterd.map((e, i) => renderCard(e, i)).join('');
+}
+
+function renderCard(e, i) {
+  const datum = e.datum ? formatDatum(e.datum) : '—';
+  const tijden = [e.opentijd, e.sluittijd].filter(Boolean).join(' – ');
+
+  return `<div class="eval-card" id="card-${i}">
+    <div class="eval-header" onclick="toggleCard(${i})">
+      <span class="eval-date">${datum}</span>
+      <span class="eval-locatie">${escHtml(e.locatie || 'Onbekend')}</span>
+      <span class="eval-manager">${escHtml(e.manager || '')}</span>
+      ${tijden ? `<span class="eval-tijd"><i class="ti ti-clock" style="font-size:11px;"></i> ${escHtml(tijden)}</span>` : ''}
+      <i class="ti ti-chevron-down eval-chevron"></i>
+    </div>
+    <div class="eval-body">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab(${i},'tekst',this)">Evaluatie</button>
+        <button class="tab-btn" onclick="switchTab(${i},'memos',this)">Memo's per categorie</button>
+      </div>
+      <div class="tab-panel active" id="tab-tekst-${i}">
+        <div class="eval-tekst">${escHtml(e.evaluatie_tekst || 'Geen evaluatietekst beschikbaar.')}</div>
+      </div>
+      <div class="tab-panel" id="tab-memos-${i}">
+        <div class="memo-grid">
+          ${Object.entries(CAT_META).map(([key, meta]) => `
+            <div class="memo-block">
+              <div class="memo-block-label"><i class="ti ${meta.icon}" style="font-size:11px;margin-right:4px;"></i>${meta.label}</div>
+              <div class="memo-block-tekst ${!e[key] ? 'empty' : ''}">${e[key] ? escHtml(e[key]) : 'Geen memo\'s'}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="eval-actions">
+        <button class="btn" onclick="kopieer(${i})"><i class="ti ti-copy" id="copy-icon-${i}"></i><span id="copy-txt-${i}">Kopieer</span></button>
+        <button class="btn btn-green" onclick="download(${i})"><i class="ti ti-download"></i> Download .txt</button>
+        <button class="btn" onclick="mail(${i})"><i class="ti ti-mail"></i> E-mail</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(i) {
+  const card = document.getElementById('card-' + i);
+  card.classList.toggle('open');
+}
+
+function switchTab(i, tab, btn) {
+  const card = document.getElementById('card-' + i);
+  card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  card.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tab + '-' + i).classList.add('active');
+}
+
+// ── Acties ──
+function kopieer(i) {
+  const e = gefilterd[i];
+  navigator.clipboard.writeText(e.evaluatie_tekst || '').then(() => {
+    document.getElementById('copy-icon-' + i).className = 'ti ti-check';
+    document.getElementById('copy-txt-' + i).textContent = 'Gekopieerd!';
+    setTimeout(() => {
+      document.getElementById('copy-icon-' + i).className = 'ti ti-copy';
+      document.getElementById('copy-txt-' + i).textContent = 'Kopieer';
+    }, 2000);
+  });
+}
+
+function download(i) {
+  const e = gefilterd[i];
+  const naam = [e.datum, e.locatie].filter(Boolean).join('-').replace(/\s+/g,'-');
+  const blob = new Blob([e.evaluatie_tekst || ''], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `evaluatie-${naam}.txt`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function mail(i) {
+  const e = gefilterd[i];
+  const parts = ['Avondevaluatie', e.locatie, e.datum].filter(Boolean);
+  const subject = encodeURIComponent(parts.join(' — '));
+  const body = encodeURIComponent(e.evaluatie_tekst || '');
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+// ── Helpers ──
+function formatDatum(d) {
+  if (!d) return '—';
+  try {
+    return new Date(d).toLocaleDateString('nl-NL', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+  } catch { return d; }
+}
+
+function escHtml(t) {
+  if (!t) return '';
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──
+laadEvaluaties();
+</script>
+</body>
+</html>
