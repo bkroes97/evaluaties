@@ -186,7 +186,12 @@
     </div>
   </div>
 
-  <div class="no-support" id="noSupport">Spraakherkenning werkt het best in Chrome (desktop of Android).</div>
+  <div class="no-support" id="noSupport"></div>
+  <div class="no-support" id="iosChromeBanner" style="display:none;background:var(--amber-bg);color:var(--amber-text);">
+    <strong>Gebruik Safari voor spraak op iPhone/iPad</strong><br>
+    Chrome op iOS ondersteunt geen spraakherkenning — dat is een beperking van Apple, niet van de app.
+    Open deze pagina in <strong>Safari</strong> voor de microfoonfunctie. Typen via de tekstvakjes werkt wel gewoon in Chrome.
+  </div>
 
   <!-- Mic -->
   <div class="mic-center">
@@ -292,12 +297,26 @@ async function callClaude(payload, meta, saveToSupabase) {
 }
 
 // ── Spraakherkenning ──
-// Detecteer iOS — op iOS/Safari werkt continuous:true niet
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isIOSChrome  = isIOS && /CriOS/.test(navigator.userAgent);
+const isIOSSafari  = isIOS && /Safari/.test(navigator.userAgent) && !/CriOS/.test(navigator.userAgent);
 
 function initRec() {
+  // iOS Chrome: geen spraakherkenning mogelijk — toon melding en stop
+  if (isIOSChrome) {
+    document.getElementById('iosChromeBanner').style.display = 'block';
+    document.getElementById('micBtn').disabled = true;
+    document.getElementById('micBtn').title = 'Niet beschikbaar in Chrome op iOS — gebruik Safari';
+    document.getElementById('micStatus').textContent = 'Spraak werkt niet in Chrome op iOS — gebruik Safari';
+    document.getElementById('micIcon').className = 'ti ti-brand-safari';
+    return false;
+  }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { document.getElementById('noSupport').style.display = 'block'; return false; }
+  if (!SR) {
+    document.getElementById('noSupport').textContent = 'Spraakherkenning wordt niet ondersteund in deze browser. Gebruik Chrome (Android/desktop) of Safari (iPhone/iPad).';
+    document.getElementById('noSupport').style.display = 'block';
+    return false;
+  }
   recognition = new SR();
   recognition.lang = 'nl-NL';
   recognition.continuous = !isIOS;   // iOS: false, anders: true
