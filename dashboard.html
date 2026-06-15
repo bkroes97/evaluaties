@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Evaluatie Dashboard</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -191,9 +192,10 @@
 
   <div class="header">
     <div class="header-left">
-      <a href="/" class="back-btn"><i class="ti ti-arrow-left"></i> Terug</a>
+      <a href="/locatie.html" class="back-btn"><i class="ti ti-arrow-left"></i> Terug</a>
       <h1>Evaluaties</h1>
     </div>
+    <button class="btn" onclick="uitloggen()" title="Uitloggen" style="padding:6px 10px;"><i class="ti ti-logout"></i></button>
   </div>
 
   <!-- Filters -->
@@ -485,8 +487,24 @@ function escHtml(t) {
   return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Auth ──
+const _dashUrl  = 'https://gobqaidvirtadgpduznd.supabase.co';
+const _dashAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
+var supabase = window.supabase.createClient(_dashUrl, _dashAnon);
+
+async function uitloggen() {
+  await supabase.auth.signOut();
+  window.location.href = '/auth.html';
+}
+
 // ── Init ──
-laadEvaluaties();
+(async function() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { window.location.href = '/auth.html'; return; }
+  const { data: profiel } = await supabase.from('gebruikers').select('goedgekeurd').eq('id', session.user.id).single();
+  if (!profiel?.goedgekeurd) { window.location.href = '/auth.html'; return; }
+  laadEvaluaties();
+})();
 </script>
 </body>
 </html>
