@@ -212,6 +212,7 @@
       <button class="btn" onclick="copyOutput()"><i class="ti ti-copy" id="copyIcon"></i><span id="copyTxt">Kopieer tekst</span></button>
       <button class="btn btn-green" onclick="downloadTxt()"><i class="ti ti-download"></i> Download .txt</button>
       <button class="btn" onclick="openMail()"><i class="ti ti-mail"></i> Open in e-mail</button>
+      <button class="btn" onclick="verwijderEvaluatie()" style="margin-left:auto;background:var(--red-bg);color:var(--red-text);border-color:var(--red-text);"><i class="ti ti-trash"></i> Verwijderen</button>
     </div>
     <div class="btn-row" id="editBtns" style="display:none;">
       <button class="btn btn-primary" onclick="saveEdit()"><i class="ti ti-device-floppy" id="saveEditIcon"></i><span id="saveEditTxt">Opslaan</span></button>
@@ -981,6 +982,31 @@ function downloadTxt() {
   const a = document.createElement('a');
   a.href = url; a.download = `evaluatie-${naam}.txt`;
   a.click(); URL.revokeObjectURL(url);
+}
+
+async function verwijderEvaluatie() {
+  if (!currentEvalId) { alert('Geen evaluatie om te verwijderen.'); return; }
+  if (!confirm('Deze evaluatie definitief verwijderen?')) return;
+
+  try {
+    const res = await fetch('/.netlify/functions/verwijder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: currentEvalId })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    // Terug naar locatiepagina
+    const locatie = document.getElementById('locatie').value;
+    showToast('Evaluatie verwijderd');
+    setTimeout(() => {
+      window.location.href = locatie
+        ? `/locatie.html`
+        : '/locatie.html';
+    }, 800);
+  } catch(err) {
+    alert('Verwijderen mislukt: ' + err.message);
+  }
 }
 
 function openMail() {
