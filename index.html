@@ -753,13 +753,11 @@ function scheduleAutoSave() {
 
 function newAvond() {
   if (!confirm('Nieuwe avond beginnen? Niet-opgeslagen wijzigingen gaan verloren.')) return;
-  // Verwijder opgeslagen evalId uit session
-  const datum = document.getElementById('datum').value;
-  const locatie = document.getElementById('locatie').value;
-  if (datum && locatie) sessionStorage.removeItem(`evalId_${datum}_${locatie}`);
+  // Verwijder alle evalId keys uit sessionStorage
+  Object.keys(sessionStorage).filter(k => k.startsWith('evalId_')).forEach(k => sessionStorage.removeItem(k));
+  currentEvalId = null;
   setFormData({});
   document.getElementById('datum').value = new Date().toISOString().split('T')[0];
-
 }
 
 function showToast(msg) {
@@ -1111,16 +1109,8 @@ initRec();
     }
     updateOnderwerp();
 
-    // Herstel evalId uit sessionStorage voor deze datum+locatie
-    const datumVal  = document.getElementById('datum').value;
-    const locatieVal = document.getElementById('locatie').value;
-    if (datumVal && locatieVal) {
-      const stored = sessionStorage.getItem(`evalId_${datumVal}_${locatieVal}`);
-      if (stored) {
-        currentEvalId = stored;
-        console.log('[init] evalId hersteld uit session:', currentEvalId);
-      }
-    }
+    // Niet herstellen uit sessionStorage — altijd fris starten bij nieuwe evaluatie
+    currentEvalId = null;
   }
 })();
 
