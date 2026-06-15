@@ -718,6 +718,13 @@ async function slaConceptOp(data) {
       ...memoMeta
     };
 
+    // Herstel id uit sessionStorage als die er is
+    const sessionKey = `evalId_${data.datum}_${data.locatie}`;
+    if (!currentEvalId) {
+      const stored = sessionStorage.getItem(sessionKey);
+      if (stored) currentEvalId = stored;
+    }
+
     const res = await fetch('/.netlify/functions/opslaan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -732,6 +739,8 @@ async function slaConceptOp(data) {
     const result = await res.json();
     if (result.id) {
       currentEvalId = result.id;
+      // Bewaar id in sessionStorage zodat het bewaard blijft bij navigatie
+      sessionStorage.setItem(sessionKey, result.id);
       console.log('[concept] opgeslagen met id:', currentEvalId);
     }
   } catch(e) {
@@ -760,6 +769,10 @@ function scheduleAutoSave() {
 
 function newAvond() {
   if (!confirm('Nieuwe avond beginnen? Niet-opgeslagen wijzigingen gaan verloren.')) return;
+  // Verwijder opgeslagen evalId uit session
+  const datum = document.getElementById('datum').value;
+  const locatie = document.getElementById('locatie').value;
+  if (datum && locatie) sessionStorage.removeItem(`evalId_${datum}_${locatie}`);
   setFormData({});
   document.getElementById('datum').value = new Date().toISOString().split('T')[0];
 
@@ -1120,6 +1133,17 @@ initRec();
       }
     }
     updateOnderwerp();
+
+    // Herstel evalId uit sessionStorage voor deze datum+locatie
+    const datumVal  = document.getElementById('datum').value;
+    const locatieVal = document.getElementById('locatie').value;
+    if (datumVal && locatieVal) {
+      const stored = sessionStorage.getItem(`evalId_${datumVal}_${locatieVal}`);
+      if (stored) {
+        currentEvalId = stored;
+        console.log('[init] evalId hersteld uit session:', currentEvalId);
+      }
+    }
   }
 })();
 
