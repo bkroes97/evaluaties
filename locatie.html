@@ -89,6 +89,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadein { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
     .eval-item, .locatie-kaart { animation: fadein 0.15s ease; }
+    .eval-delete { padding: 4px 8px; font-size: 12px; border: 0.5px solid var(--red-text); border-radius: var(--radius); background: var(--red-bg); color: var(--red-text); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; flex-shrink: 0; text-decoration: none; }
+    .eval-delete:hover { opacity: 0.85; }
   </style>
 </head>
 <body>
@@ -319,6 +321,33 @@ function renderEvaluaties() {
       <i class="ti ti-chevron-right" style="color:var(--text3);flex-shrink:0;"></i>
     </a>`;
   }).join('');
+}
+
+async function verwijderEval(id, event) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (!confirm('Deze evaluatie verwijderen?')) return;
+
+  const btn = event.currentTarget;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader"></i>';
+
+  try {
+    const res = await fetch('/.netlify/functions/verwijder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    // Verwijder uit lokale array
+    actieveEvaluaties = actieveEvaluaties.filter(e => e.id !== id);
+    renderEvaluaties();
+  } catch(err) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-trash"></i>';
+    alert('Verwijderen mislukt: ' + err.message);
+  }
 }
 
 function escHtml(t) {
