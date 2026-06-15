@@ -4,13 +4,14 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { locatie, manager, limit = 200 } = event.queryStringParameters || {};
+    const { locatie, manager, limit = 200, eval_id } = event.queryStringParameters || {};
 
     // Haal auth token op uit header
     const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
     const token = authHeader.replace('Bearer ', '').trim() || process.env.SUPABASE_ANON_KEY;
 
     let url = `${process.env.SUPABASE_URL}/rest/v1/evaluaties?select=*&order=aangemaakt_op.desc&limit=${limit}`;
+    if (eval_id) url += `&id=eq.${encodeURIComponent(eval_id)}`;
     if (locatie) url += `&locatie=eq.${encodeURIComponent(locatie)}`;
     if (manager) url += `&manager=eq.${encodeURIComponent(manager)}`;
 
