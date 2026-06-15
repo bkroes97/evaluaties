@@ -1085,37 +1085,109 @@ initRec();
   const auth = await checkAuth();
   if (!auth) return;
 
-  // Datum vandaag
-  document.getElementById('datum').value = new Date().toISOString().split('T')[0];
-
-  // Naam invullen
-  if (!document.getElementById('naamInput').value) {
-    document.getElementById('naamInput').value = auth.profiel.naam || '';
-  }
-
-  // Locatie uit URL parameter instellen
-  const params = new URLSearchParams(window.location.search);
-  const locatieParam = params.get('locatie');
-
-  if (locatieParam) {
-    const sel = document.getElementById('locatie');
-    for (const opt of sel.options) {
-      if (opt.value === locatieParam) { sel.value = locatieParam; break; }
-    }
-    if (sel.value !== locatieParam) {
-      const opt = document.createElement('option');
-      opt.value = locatieParam; opt.textContent = locatieParam;
-      sel.appendChild(opt); sel.value = locatieParam;
-    }
-  }
-
-  // Onderwerp altijd updaten na locatie + datum instellen
-  updateOnderwerp();
-
-  // Auteur bewaren
   window._auteurId = auth.profiel.id;
   window._gebruikerNaam = auth.profiel.naam;
+
+  const params = new URLSearchParams(window.location.search);
+  const evalIdParam = params.get('eval_id');
+  const locatieParam = params.get('locatie');
+
+  if (evalIdParam) {
+    // Laad bestaande evaluatie uit Supabase
+    await laadEvaluatieUitSupabase(evalIdParam);
+  } else {
+    // Nieuwe evaluatie — datum vandaag + naam invullen
+    document.getElementById('datum').value = new Date().toISOString().split('T')[0];
+    if (!document.getElementById('naamInput').value) {
+      document.getElementById('naamInput').value = auth.profiel.naam || '';
+    }
+    if (locatieParam) {
+      const sel = document.getElementById('locatie');
+      for (const opt of sel.options) {
+        if (opt.value === locatieParam) { sel.value = locatieParam; break; }
+      }
+      if (sel.value !== locatieParam) {
+        const opt = document.createElement('option');
+        opt.value = locatieParam; opt.textContent = locatieParam;
+        sel.appendChild(opt); sel.value = locatieParam;
+      }
+    }
+    updateOnderwerp();
+  }
 })();
+
+async function laadEvaluatieUitSupabase(evalId) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || '';
+
+    const res = await fetch(
+      `/.netlify/functions/evaluaties?eval_id=${evalId}`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    const eval_ = Array.isArray(data) ? data[0] : data;
+    if (!eval_) { console.warn('Evaluatie niet gevonden'); return; }
+
+    // Zet currentEvalId zodat autosave de bestaande rij updatet
+    currentEvalId = eval_.id;
+
+    // Vul formuliervelden in
+    document.getElementById('datum').value = eval_.datum || new Date().toISOString().split('T')[0];
+    document.getElementById('naamInput').value = eval_.manager || window._gebruikerNaam || '';
+    document.getElementById('openTijd').value = eval_.opentijd || '23:00';
+    document.getElementById('sluitTijd').value = eval_.sluittijd || '05:00';
+    document.getElementById('onderwerp').value = eval_.onderwerp || '';
+
+    // Locatie instellen
+    if (eval_.locatie) {
+      const sel = document.getElementById('locatie');
+      for (const opt of sel.options) {
+        if (opt.value === eval_.locatie) { sel.value = eval_.locatie; break; }
+      }
+      if (sel.value !== eval_.locatie) {
+        const opt = document.createElement('option');
+        opt.value = eval_.locatie; opt.textContent = eval_.locatie;
+        sel.appendChild(opt); sel.value = eval_.locatie;
+      }
+    }
+
+    // Herstel memo's uit de memo kolommen
+    const CAT_KEYS = { verloop:'memo_verloop', algemeen:'memo_algemeen', personeel:'memo_personeel',
+      dj:'memo_dj', lichten:'memo_lichten', veiligheid:'memo_veiligheid', td:'memo_td', overig:'memo_overig' };
+
+    for (const [cat, key] of Object.entries(CAT_KEYS)) {
+      const raw = eval_[key];
+      if (!raw) continue;
+      // Format: "[HH:MM] tekst | [HH:MM] tekst"
+      const items = raw.split(' | ').filter(Boolean);
+      for (const item of items) {
+        const match = item.match(/^\[(\d{2}:\d{2})\] (.+)$/);
+        if (match) {
+          const id = ++memoId;
+          memos[cat].push({ id, tekst: match[2], tijd: match[1] });
+        } else if (item.trim()) {
+          const id = ++memoId;
+          memos[cat].push({ id, tekst: item.trim(), tijd: timeNow() });
+        }
+      }
+      renderCat(cat);
+    }
+
+    updateGenBtn();
+
+    // Toon evaluatietekst als die er al is
+    if (eval_.evaluatie_tekst) {
+      document.getElementById('outputTxt').textContent = eval_.evaluatie_tekst;
+      document.getElementById('outputCard').style.display = 'block';
+      document.getElementById('savedBadge').style.display = 'inline-flex';
+    }
+
+    console.log('[laden] evaluatie hersteld:', currentEvalId);
+  } catch(e) {
+    console.error('[laden] fout:', e.message);
+  }
+}
 </script>
 </body>
 </html>
