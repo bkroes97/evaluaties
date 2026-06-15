@@ -144,7 +144,7 @@
   <div class="topbar">
     <div class="topbar-group">
       <span class="topbar-label">Datum:</span>
-      <input type="date" id="datum" onchange="updateOnderwerp()" onchange="updateOnderwerp();scheduleAutoSave()" />
+      <input type="date" id="datum" onchange="updateOnderwerp();scheduleAutoSave()" />
     </div>
     <div class="topbar-group">
       <span class="topbar-label">Locatie:</span>
@@ -1039,51 +1039,42 @@ async function uitloggen() {
 // ── Init ──
 buildCatsGrid();
 initRec();
-document.getElementById('datum').value = new Date().toISOString().split('T')[0];
-populateSavedList();
 
-// Auth check + locatie uit URL instellen
+// Auth check + alles instellen
 (async function initPagina() {
   const auth = await checkAuth();
   if (!auth) return;
 
-  // Naam tonen in header
-  document.querySelector('h1').textContent = 'Avondevaluatie';
+  // Datum vandaag
+  document.getElementById('datum').value = new Date().toISOString().split('T')[0];
+
+  // Naam invullen
+  if (!document.getElementById('naamInput').value) {
+    document.getElementById('naamInput').value = auth.profiel.naam || '';
+  }
 
   // Locatie uit URL parameter instellen
   const params = new URLSearchParams(window.location.search);
   const locatieParam = params.get('locatie');
-  const locatieIdParam = params.get('locatie_id');
 
   if (locatieParam) {
     const sel = document.getElementById('locatie');
-    // Zoek optie op naam
     for (const opt of sel.options) {
       if (opt.value === locatieParam) { sel.value = locatieParam; break; }
     }
-    // Als locatie niet in dropdown staat, voeg toe
     if (sel.value !== locatieParam) {
       const opt = document.createElement('option');
       opt.value = locatieParam; opt.textContent = locatieParam;
       sel.appendChild(opt); sel.value = locatieParam;
     }
-    updateOnderwerp();
   }
 
-  // Datum van vandaag instellen
-  if (!document.getElementById('datum').value) {
-    document.getElementById('datum').value = new Date().toISOString().split('T')[0];
-    updateOnderwerp();
-  }
+  // Onderwerp altijd updaten na locatie + datum instellen
+  updateOnderwerp();
 
-  // Auteur_id opslaan voor later
+  // Auteur bewaren
   window._auteurId = auth.profiel.id;
   window._gebruikerNaam = auth.profiel.naam;
-
-  // Naam invullen als naamInput leeg is
-  if (!document.getElementById('naamInput').value) {
-    document.getElementById('naamInput').value = auth.profiel.naam || '';
-  }
 })();
 </script>
 </body>
