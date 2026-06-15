@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kies locatie — Avondevaluatie</title>
+  <title>Avondevaluatie</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -14,7 +14,9 @@
       --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
       --radius: 8px; --radius-lg: 12px;
       --green-bg: #eaf3de; --green-text: #3b6d11;
+      --amber-bg: #faeeda; --amber-text: #633806;
       --blue-bg: #e6f1fb; --blue-text: #0c447c;
+      --red-bg: #fcebeb; --red-text: #a32d2d;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -22,64 +24,130 @@
         --text: #f0f0ee; --text2: #aaaaaa; --text3: #666660;
         --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
         --green-bg: #173404; --green-text: #c0dd97;
+        --amber-bg: #412402; --amber-text: #fac775;
         --blue-bg: #042c53; --blue-text: #b5d4f4;
+        --red-bg: #501313; --red-text: #f09595;
       }
     }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding: 1.5rem 1rem 3rem; }
-    .container { max-width: 600px; margin: 0 auto; }
-    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
-    .header-left { display: flex; flex-direction: column; gap: 4px; }
-    h1 { font-size: 20px; font-weight: 500; }
-    .welkom { font-size: 13px; color: var(--text2); }
-    .btn { padding: 7px 13px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text2); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; transition: background 0.15s; text-decoration: none; }
-    .btn:hover { background: var(--bg2); }
+    .container { max-width: 720px; margin: 0 auto; }
+
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 8px; }
+    .header-left h1 { font-size: 20px; font-weight: 500; }
+    .header-left .welkom { font-size: 13px; color: var(--text2); margin-top: 2px; }
     .header-right { display: flex; gap: 8px; }
+    .btn { padding: 7px 13px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text2); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; transition: all 0.15s; text-decoration: none; }
+    .btn:hover { background: var(--bg2); }
+    .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn-primary:hover { opacity: 0.85; background: var(--text); }
 
-    .sectie-label { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; margin-bottom: 10px; }
-
-    .locatie-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; }
+    /* Stap 1: Locatie kiezen */
+    .stap-label { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; margin-bottom: 12px; }
+    .locatie-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media (max-width: 480px) { .locatie-grid { grid-template-columns: 1fr; } }
 
-    .locatie-card {
-      background: var(--bg); border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg); padding: 16px;
-      cursor: pointer; transition: all 0.15s;
-      display: flex; align-items: center; gap: 12px;
-      text-decoration: none; color: var(--text);
-    }
-    .locatie-card:hover { border-color: var(--border2); background: var(--bg2); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .locatie-icon { width: 36px; height: 36px; border-radius: var(--radius); background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text2); flex-shrink: 0; }
-    .locatie-naam { font-size: 14px; font-weight: 500; }
-    .locatie-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .locatie-kaart { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px 16px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 14px; }
+    .locatie-kaart:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    .locatie-icon-wrap { width: 40px; height: 40px; border-radius: var(--radius); background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text2); flex-shrink: 0; }
+    .locatie-kaart-naam { font-size: 14px; font-weight: 500; }
+    .locatie-kaart-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
 
-    .dashboard-link { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); transition: all 0.15s; }
-    .dashboard-link:hover { background: var(--bg2); border-color: var(--border2); }
-    .dashboard-link i { font-size: 20px; color: var(--text2); }
-    .dashboard-link-text { font-size: 14px; font-weight: 500; }
-    .dashboard-link-sub { font-size: 12px; color: var(--text3); }
+    /* Stap 2: Evaluaties per locatie */
+    .locatie-detail { display: none; }
+    .locatie-detail.show { display: block; }
 
-    .loading { text-align: center; padding: 3rem; color: var(--text3); }
-    .spinner { width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
+    .detail-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .terug-btn { background: none; border: none; cursor: pointer; color: var(--text2); font-size: 20px; padding: 4px; display: flex; align-items: center; }
+    .terug-btn:hover { color: var(--text); }
+    .detail-naam { font-size: 18px; font-weight: 500; flex: 1; }
+    .detail-icon { font-size: 18px; color: var(--text2); }
+
+    .filterbar { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 10px 14px; margin-bottom: 1rem; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .filter-group { display: flex; align-items: center; gap: 6px; }
+    .filter-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+    .filter-select { font-family: inherit; font-size: 13px; padding: 5px 9px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); }
+    .filter-reset { font-size: 12px; color: var(--text3); cursor: pointer; padding: 4px 8px; border-radius: var(--radius); border: 0.5px solid var(--border); background: none; font-family: inherit; }
+    .filter-reset:hover { color: var(--text); background: var(--bg2); }
+    .filter-count { margin-left: auto; font-size: 12px; color: var(--text3); white-space: nowrap; }
+
+    .eval-list { display: flex; flex-direction: column; gap: 8px; }
+    .eval-item { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s; text-decoration: none; color: var(--text); border-left-width: 3px; }
+    .eval-item:hover { border-color: var(--border2); background: var(--bg2); }
+    .eval-item.concept { border-left-color: var(--amber-text); }
+    .eval-item.afgerond { border-left-color: var(--green-text); }
+    .eval-datum { font-size: 13px; font-weight: 500; white-space: nowrap; min-width: 130px; }
+    .eval-onderwerp { font-size: 13px; color: var(--text2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .eval-manager { font-size: 12px; color: var(--text3); white-space: nowrap; }
+    .eval-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+    .eval-badge.concept { background: var(--amber-bg); color: var(--amber-text); }
+    .eval-badge.afgerond { background: var(--green-bg); color: var(--green-text); }
+
+    .empty { text-align: center; padding: 2.5rem; color: var(--text3); font-size: 13px; }
+    .empty i { font-size: 32px; display: block; margin-bottom: 8px; }
+    .loading { text-align: center; padding: 2rem; color: var(--text3); }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 10px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-    .locatie-card, .dashboard-link { animation: fadein 0.2s ease; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+    .eval-item, .locatie-kaart { animation: fadein 0.15s ease; }
   </style>
 </head>
 <body>
 <div class="container">
+
   <div class="header">
     <div class="header-left">
       <h1>Avondevaluatie</h1>
-      <span class="welkom" id="welkomTekst">Welkom</span>
+      <div class="welkom" id="welkomTekst"></div>
     </div>
     <div class="header-right">
-      <button class="btn" onclick="uitloggen()"><i class="ti ti-logout"></i> Uitloggen</button>
+      <a href="/dashboard.html" class="btn"><i class="ti ti-layout-dashboard"></i> Overzicht</a>
+      <button class="btn" onclick="uitloggen()"><i class="ti ti-logout"></i></button>
     </div>
   </div>
 
-  <div id="inhoud">
-    <div class="loading"><div class="spinner"></div>Laden...</div>
+  <!-- Stap 1: Locaties -->
+  <div id="stap1">
+    <div class="stap-label">Kies een locatie</div>
+    <div class="locatie-grid" id="locatieGrid">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
   </div>
+
+  <!-- Stap 2: Evaluaties per locatie -->
+  <div class="locatie-detail" id="stap2">
+    <div class="detail-header">
+      <button class="terug-btn" onclick="terug()"><i class="ti ti-arrow-left"></i></button>
+      <i class="detail-icon" id="detailIcon"></i>
+      <span class="detail-naam" id="detailNaam"></span>
+      <a id="toevoegBtn" href="#" class="btn btn-primary"><i class="ti ti-plus"></i> Evaluatie toevoegen</a>
+    </div>
+
+    <div class="filterbar" id="filterbar">
+      <div class="filter-group">
+        <span class="filter-label">Jaar</span>
+        <select class="filter-select" id="filterJaar" onchange="setFilter('jaar', this.value)">
+          <option value="">Alle</option>
+        </select>
+      </div>
+      <div class="filter-group" id="filterMaandGroup" style="display:none;">
+        <span class="filter-label">Maand</span>
+        <select class="filter-select" id="filterMaand" onchange="setFilter('maand', this.value)">
+          <option value="">Alle</option>
+        </select>
+      </div>
+      <div class="filter-group" id="filterDagGroup" style="display:none;">
+        <span class="filter-label">Dag</span>
+        <select class="filter-select" id="filterDag" onchange="setFilter('dag', this.value)">
+          <option value="">Alle</option>
+        </select>
+      </div>
+      <button class="filter-reset" id="filterReset" onclick="resetFilter()" style="display:none;"><i class="ti ti-x" style="font-size:11px;"></i> Reset</button>
+      <span class="filter-count" id="filterCount"></span>
+    </div>
+
+    <div class="eval-list" id="evalLijst"></div>
+  </div>
+
 </div>
 
 <script>
@@ -88,16 +156,16 @@ const _locAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var supabase = window.supabase.createClient(_locUrl, _locAnon);
 
 const LOCATIE_ICONS = {
-  'Café Van Buren': 'ti-coffee',
-  'Club Rolluik': 'ti-music',
-  'BAR 2': 'ti-glass',
-  'De Drie Gezusters': 'ti-star',
-  "Heidi's Skihut": 'ti-mountain',
-  'De Kunstbar': 'ti-palette',
-  'Club Novia': 'ti-diamond',
-  'De Bieb': 'ti-books',
-  'Stadsgarderobe 024': 'ti-hanger'
+  'Café Van Buren': 'ti-coffee', 'Club Rolluik': 'ti-music', 'BAR 2': 'ti-glass',
+  'De Drie Gezusters': 'ti-star', "Heidi's Skihut": 'ti-mountain', 'De Kunstbar': 'ti-palette',
+  'Club Novia': 'ti-diamond', 'De Bieb': 'ti-books', 'Stadsgarderobe 024': 'ti-hanger'
 };
+const MAAND_NL = ['','jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+
+let alleLocaties = [];
+let actieveLocatie = null;
+let actieveEvaluaties = [];
+let filterJaar = '', filterMaand = '', filterDag = '';
 
 async function init() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -105,81 +173,149 @@ async function init() {
 
   const { data: profiel } = await supabase
     .from('gebruikers')
-    .select('naam, rol, goedgekeurd, gebruiker_locaties(locatie_id, is_hoofdlocatie)')
+    .select('naam, rol, goedgekeurd, gebruiker_locaties(locatie_id)')
     .eq('id', session.user.id)
     .single();
 
   if (!profiel?.goedgekeurd) { window.location.href = '/auth.html'; return; }
+  document.getElementById('welkomTekst').textContent = profiel.naam;
 
-  document.getElementById('welkomTekst').textContent = `Welkom, ${profiel.naam}`;
+  if (profiel.rol === 'kijker') { window.location.href = '/dashboard.html'; return; }
 
-  // Admin en rayonmanager: alle locaties
   let locaties = [];
   if (profiel.rol === 'admin' || profiel.rol === 'rayonmanager') {
     const { data } = await supabase.from('locaties').select('*').eq('actief', true).order('naam');
     locaties = data || [];
-  } else if (profiel.rol === 'kijker') {
-    // Kijker: geen nieuwe evaluaties aanmaken, alleen dashboard
-    renderKijker(profiel);
-    return;
   } else {
-    // Bedrijfsleider / shiftmanager: toegewezen locaties
-    const locatieIds = (profiel.gebruiker_locaties || []).map(t => t.locatie_id);
-    if (locatieIds.length > 0) {
-      const { data } = await supabase.from('locaties').select('*').in('id', locatieIds).order('naam');
+    const ids = (profiel.gebruiker_locaties || []).map(t => t.locatie_id);
+    if (ids.length > 0) {
+      const { data } = await supabase.from('locaties').select('*').in('id', ids).order('naam');
       locaties = data || [];
     }
   }
 
-  renderLocaties(locaties, profiel);
+  alleLocaties = locaties;
+  renderLocaties();
 }
 
-function renderLocaties(locaties, profiel) {
-  const kanDashboard = profiel.rol !== 'shiftmanager';
+function renderLocaties() {
+  if (alleLocaties.length === 0) {
+    document.getElementById('locatieGrid').innerHTML = '<div style="grid-column:span 2;text-align:center;padding:2rem;color:var(--text3);font-size:13px;">Geen locaties toegewezen.</div>';
+    return;
+  }
+  document.getElementById('locatieGrid').innerHTML = alleLocaties.map(loc => {
+    const icon = LOCATIE_ICONS[loc.naam] || 'ti-building';
+    return `<div class="locatie-kaart" onclick="openLocatie('${escHtml(loc.naam)}', '${icon}')">
+      <div class="locatie-icon-wrap"><i class="ti ${icon}"></i></div>
+      <div>
+        <div class="locatie-kaart-naam">${escHtml(loc.naam)}</div>
+        <div class="locatie-kaart-sub">Evaluaties bekijken</div>
+      </div>
+      <i class="ti ti-chevron-right" style="margin-left:auto;color:var(--text3);"></i>
+    </div>`;
+  }).join('');
+}
 
-  let html = '';
+async function openLocatie(naam, icon) {
+  actieveLocatie = naam;
+  filterJaar = ''; filterMaand = ''; filterDag = '';
 
-  if (locaties.length > 0) {
-    html += `<div class="sectie-label">Kies een locatie om een evaluatie te starten</div>`;
-    html += `<div class="locatie-grid">`;
-    html += locaties.map(loc => `
-      <a class="locatie-card" href="/index.html?locatie=${encodeURIComponent(loc.naam)}&locatie_id=${loc.id}" >
-        <div class="locatie-icon"><i class="ti ${LOCATIE_ICONS[loc.naam] || 'ti-building'}"></i></div>
-        <div>
-          <div class="locatie-naam">${escHtml(loc.naam)}</div>
-          <div class="locatie-sub">Evaluatie starten</div>
-        </div>
-      </a>`).join('');
-    html += `</div>`;
+  document.getElementById('stap1').style.display = 'none';
+  document.getElementById('stap2').classList.add('show');
+  document.getElementById('detailNaam').textContent = naam;
+  document.getElementById('detailIcon').className = `detail-icon ti ${icon}`;
+  document.getElementById('toevoegBtn').href = `/index.html?locatie=${encodeURIComponent(naam)}`;
+  document.getElementById('evalLijst').innerHTML = '<div class="loading"><div class="spinner"></div>Evaluaties laden...</div>';
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token || '';
+  const res = await fetch(`/.netlify/functions/evaluaties?locatie=${encodeURIComponent(naam)}&limit=500`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  const data = await res.json();
+  actieveEvaluaties = Array.isArray(data) ? data : [];
+
+  vulFilters();
+  renderEvaluaties();
+}
+
+function terug() {
+  document.getElementById('stap1').style.display = '';
+  document.getElementById('stap2').classList.remove('show');
+  actieveLocatie = null;
+  actieveEvaluaties = [];
+}
+
+function vulFilters() {
+  const jaren = [...new Set(actieveEvaluaties.map(e => e.datum?.substring(0,4)).filter(Boolean))].sort().reverse();
+  const sel = document.getElementById('filterJaar');
+  sel.innerHTML = '<option value="">Alle jaren</option>' + jaren.map(j => `<option value="${j}">${j}</option>`).join('');
+}
+
+function setFilter(type, val) {
+  if (type === 'jaar')  { filterJaar = val; filterMaand = ''; filterDag = ''; }
+  if (type === 'maand') { filterMaand = val; filterDag = ''; }
+  if (type === 'dag')   { filterDag = val; }
+
+  // Update maand dropdown
+  const maandGroup = document.getElementById('filterMaandGroup');
+  const dagGroup   = document.getElementById('filterDagGroup');
+
+  if (filterJaar) {
+    const maanden = [...new Set(actieveEvaluaties.filter(e => e.datum?.startsWith(filterJaar)).map(e => e.datum?.substring(5,7)).filter(Boolean))].sort().reverse();
+    document.getElementById('filterMaand').innerHTML = '<option value="">Alle maanden</option>' + maanden.map(m => `<option value="${m}" ${m===filterMaand?'selected':''}>${MAAND_NL[parseInt(m)]}</option>`).join('');
+    maandGroup.style.display = '';
   } else {
-    html += `<p style="font-size:13px;color:var(--text3);margin-bottom:1.5rem;">Je hebt nog geen locaties toegewezen gekregen. Neem contact op met een beheerder.</p>`;
+    maandGroup.style.display = 'none';
+    dagGroup.style.display = 'none';
   }
 
-  html += `
-    <div class="sectie-label" style="margin-top:0.5rem;">Overzicht</div>
-    <a class="dashboard-link" href="/dashboard.html">
-      <i class="ti ti-layout-dashboard"></i>
-      <div>
-        <div class="dashboard-link-text">Dashboard</div>
-        <div class="dashboard-link-sub">Bekijk eerder gemaakte evaluaties</div>
-      </div>
-      <i class="ti ti-chevron-right" style="margin-left:auto;color:var(--text3);"></i>
-    </a>`;
+  if (filterJaar && filterMaand) {
+    const dagen = [...new Set(actieveEvaluaties.filter(e => e.datum?.startsWith(`${filterJaar}-${filterMaand}`)).map(e => e.datum?.substring(8,10)).filter(Boolean))].sort().reverse();
+    document.getElementById('filterDag').innerHTML = '<option value="">Alle dagen</option>' + dagen.map(d => `<option value="${d}" ${d===filterDag?'selected':''}>${parseInt(d)}</option>`).join('');
+    dagGroup.style.display = '';
+  } else {
+    dagGroup.style.display = 'none';
+  }
 
-  document.getElementById('inhoud').innerHTML = html;
+  document.getElementById('filterReset').style.display = filterJaar ? '' : 'none';
+  renderEvaluaties();
 }
 
-function renderKijker(profiel) {
-  document.getElementById('inhoud').innerHTML = `
-    <div class="sectie-label">Overzicht</div>
-    <a class="dashboard-link" href="/dashboard.html">
-      <i class="ti ti-layout-dashboard"></i>
-      <div>
-        <div class="dashboard-link-text">Dashboard</div>
-        <div class="dashboard-link-sub">Bekijk evaluaties van jouw locaties</div>
-      </div>
-      <i class="ti ti-chevron-right" style="margin-left:auto;color:var(--text3);"></i>
+function resetFilter() {
+  filterJaar = ''; filterMaand = ''; filterDag = '';
+  document.getElementById('filterJaar').value = '';
+  document.getElementById('filterMaandGroup').style.display = 'none';
+  document.getElementById('filterDagGroup').style.display = 'none';
+  document.getElementById('filterReset').style.display = 'none';
+  renderEvaluaties();
+}
+
+function renderEvaluaties() {
+  let items = actieveEvaluaties;
+  if (filterJaar)  items = items.filter(e => e.datum?.startsWith(filterJaar));
+  if (filterMaand) items = items.filter(e => e.datum?.substring(5,7) === filterMaand);
+  if (filterDag)   items = items.filter(e => e.datum?.substring(8,10) === filterDag);
+
+  document.getElementById('filterCount').textContent = items.length + ' evaluatie' + (items.length !== 1 ? 's' : '');
+
+  if (items.length === 0) {
+    document.getElementById('evalLijst').innerHTML = '<div class="empty"><i class="ti ti-clipboard-off"></i>Geen evaluaties gevonden</div>';
+    return;
+  }
+
+  document.getElementById('evalLijst').innerHTML = items.map(e => {
+    const isConcept = !e.evaluatie_tekst || e.status === 'concept';
+    const url = `/index.html?locatie=${encodeURIComponent(e.locatie || '')}&eval_id=${e.id}`;
+    const datum = e.datum ? new Date(e.datum).toLocaleDateString('nl-NL', { weekday:'short', day:'numeric', month:'short', year:'numeric' }) : '—';
+    return `<a class="eval-item ${isConcept ? 'concept' : 'afgerond'}" href="${url}">
+      <span class="eval-datum">${datum}</span>
+      <span class="eval-onderwerp">${escHtml(e.onderwerp || '—')}</span>
+      <span class="eval-manager">${escHtml(e.manager || '')}</span>
+      <span class="eval-badge ${isConcept ? 'concept' : 'afgerond'}">${isConcept ? 'Concept' : 'Afgerond'}</span>
+      <i class="ti ti-chevron-right" style="color:var(--text3);flex-shrink:0;"></i>
     </a>`;
+  }).join('');
 }
 
 function escHtml(t) {
