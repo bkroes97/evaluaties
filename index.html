@@ -730,7 +730,7 @@ async function slaConceptOp(data) {
     });
 
     const result = await res.json();
-    if (result.id && !currentEvalId) {
+    if (result.id) {
       currentEvalId = result.id;
       console.log('[concept] opgeslagen met id:', currentEvalId);
     }
