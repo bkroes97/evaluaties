@@ -1,10 +1,10 @@
 // auth-check.js — voeg toe aan elke pagina die auth vereist
 // <script src="/auth-check.js"></script>
 
-const SUPABASE_URL  = 'https://gobqaidvirtadgpduznd.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
+var SUPABASE_URL  = 'https://gobqaidvirtadgpduznd.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
 
-window._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+if (!window._supabase) window._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 window._authData = null;
 
