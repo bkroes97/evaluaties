@@ -198,9 +198,10 @@
 
   <div class="header">
     <div class="header-left">
-      <a href="/locatie.html" class="back-btn"><i class="ti ti-arrow-left"></i> Terug</a>
+      <a href="/locatie.html" class="back-btn"><i class="ti ti-arrow-left"></i> Locaties</a>
       <h1>Evaluaties</h1>
     </div>
+    <span id="beheerBtn" style="display:none;"><a href="/admin.html" class="btn"><i class="ti ti-settings"></i> Beheer</a></span>
     <button class="btn" onclick="uitloggen()" title="Uitloggen" style="padding:6px 10px;"><i class="ti ti-logout"></i></button>
   </div>
 
@@ -598,8 +599,11 @@ async function uitloggen() {
 (async function() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { window.location.href = '/auth.html'; return; }
-  const { data: profiel } = await supabase.from('gebruikers').select('goedgekeurd').eq('id', session.user.id).single();
+  const { data: profiel } = await supabase.from('gebruikers').select('goedgekeurd,rol').eq('id', session.user.id).single();
   if (!profiel?.goedgekeurd) { window.location.href = '/auth.html'; return; }
+  if (profiel.rol === 'admin' || profiel.rol === 'rayonmanager') {
+    document.getElementById('beheerBtn').style.display = '';
+  }
   laadEvaluaties();
 })();
 </script>
