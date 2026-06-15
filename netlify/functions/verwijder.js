@@ -10,8 +10,8 @@ exports.handler = async (event) => {
     const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/evaluaties?id=eq.${id}`, {
       method: 'DELETE',
       headers: {
-        'apikey': process.env.SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
         'Prefer': 'return=minimal'
       }
     });
