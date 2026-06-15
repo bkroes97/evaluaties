@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Avondevaluatie</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -99,11 +100,6 @@
     .gen-btn:hover { background: var(--bg2); }
     .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* Opgeslagen avonden */
-    .saved-bar { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 10px 14px; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .saved-bar-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
-    .saved-select { font-family: inherit; font-size: 13px; padding: 5px 9px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); flex: 1; min-width: 0; }
-
     /* Output */
     .output-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; display: none; }
     .output-label { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -131,19 +127,12 @@
   <div class="header">
     <h1>Avondevaluatie</h1>
     <div class="header-btns">
+      <a href="/locatie.html" class="btn"><i class="ti ti-arrow-left"></i> Locaties</a>
       <a href="/dashboard.html" class="btn"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
       <button class="btn" id="saveBtn" onclick="saveProgress()"><i class="ti ti-device-floppy" id="saveBtnIcon"></i> <span id="saveBtnTxt">Opslaan</span></button>
       <button class="btn" onclick="newAvond()"><i class="ti ti-plus"></i> Nieuwe avond</button>
+      <button class="btn" onclick="uitloggen()" title="Uitloggen"><i class="ti ti-logout"></i></button>
     </div>
-  </div>
-
-  <!-- Opgeslagen avonden laden -->
-  <div class="saved-bar">
-    <span class="saved-bar-label"><i class="ti ti-history"></i> Eerder opgeslagen:</span>
-    <select class="saved-select" id="savedSelect" onchange="loadSaved()">
-      <option value="">— Kies een avond —</option>
-    </select>
-    <button class="btn" onclick="deleteSaved()"><i class="ti ti-trash"></i></button>
   </div>
 
   <!-- Onderwerp -->
@@ -692,8 +681,7 @@ function saveProgress(silent = false) {
   localStorage.setItem(key, JSON.stringify(data));
   // Als de key veranderd is (bijv. nieuwe locatie/datum), update de lijst
   if (key !== lastSavedKey) {
-    populateSavedList(key);
-    lastSavedKey = key;
+      lastSavedKey = key;
   }
   // Update save button
   const icon = document.getElementById('saveBtnIcon');
@@ -722,38 +710,19 @@ function scheduleAutoSave() {
   autoSaveTimer = setTimeout(() => { saveProgress(true); }, 2000);
 }
 
-function populateSavedList(selectKey) {
-  const sel = document.getElementById('savedSelect');
-  const keys = Object.keys(localStorage).filter(k => k.startsWith('eval_')).sort().reverse();
-  sel.innerHTML = '<option value="">— Kies een avond —</option>' +
-    keys.map(k => {
-      const d = JSON.parse(localStorage.getItem(k) || '{}');
-      const label = (d.onderwerp ? d.onderwerp + ' — ' : '') + (d.datum || '?') + ' — ' + (d.locatie || 'onbekend') + (d.naam ? ' (' + d.naam + ')' : '');
-      return `<option value="${k}" ${k === selectKey ? 'selected' : ''}>${label}</option>`;
+" ${k === selectKey ? 'selected' : ''}>${label}</option>`;
     }).join('');
 }
 
-function loadSaved() {
-  const key = document.getElementById('savedSelect').value;
-  if (!key) return;
-  const raw = localStorage.getItem(key);
-  if (!raw) return;
-  setFormData(JSON.parse(raw));
-}
 
-function deleteSaved() {
-  const key = document.getElementById('savedSelect').value;
-  if (!key) return;
-  if (!confirm('Deze opgeslagen avond verwijderen?')) return;
-  localStorage.removeItem(key);
-  populateSavedList();
-}
+
+
 
 function newAvond() {
   if (!confirm('Nieuwe avond beginnen? Niet-opgeslagen wijzigingen gaan verloren.')) return;
   setFormData({});
   document.getElementById('datum').value = new Date().toISOString().split('T')[0];
-  document.getElementById('savedSelect').value = '';
+
 }
 
 function showToast(msg) {
@@ -1049,28 +1018,71 @@ function initTouchDrag(el, cat, id) {
   });
 }
 
+// ── Auth ──
+const _idxUrl  = 'https://gobqaidvirtadgpduznd.supabase.co';
+const _idxAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
+var supabase = window.supabase.createClient(_idxUrl, _idxAnon);
+
+async function checkAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { window.location.href = '/auth.html'; return null; }
+  const { data: profiel } = await supabase.from('gebruikers').select('id,naam,rol,goedgekeurd').eq('id', session.user.id).single();
+  if (!profiel?.goedgekeurd) { window.location.href = '/auth.html'; return null; }
+  return { session, profiel };
+}
+
+async function uitloggen() {
+  await supabase.auth.signOut();
+  window.location.href = '/auth.html';
+}
+
 // ── Init ──
 buildCatsGrid();
 initRec();
 document.getElementById('datum').value = new Date().toISOString().split('T')[0];
 populateSavedList();
 
-// Herstel automatisch de meest recente avond bij opstarten
-(function herstelLaatste() {
-  const keys = Object.keys(localStorage).filter(k => k.startsWith('eval_')).sort().reverse();
-  if (keys.length > 0) {
-    const raw = localStorage.getItem(keys[0]);
-    if (raw) {
-      try {
-        const data = JSON.parse(raw);
-        const heeftContent = data.datum || data.locatie || Object.values(data.memos || {}).some(arr => arr.length > 0);
-        if (heeftContent) {
-          setFormData(data);
-          lastSavedKey = keys[0];
-          document.getElementById('savedSelect').value = keys[0];
-        }
-      } catch(e) {}
+// Auth check + locatie uit URL instellen
+(async function initPagina() {
+  const auth = await checkAuth();
+  if (!auth) return;
+
+  // Naam tonen in header
+  document.querySelector('h1').textContent = 'Avondevaluatie';
+
+  // Locatie uit URL parameter instellen
+  const params = new URLSearchParams(window.location.search);
+  const locatieParam = params.get('locatie');
+  const locatieIdParam = params.get('locatie_id');
+
+  if (locatieParam) {
+    const sel = document.getElementById('locatie');
+    // Zoek optie op naam
+    for (const opt of sel.options) {
+      if (opt.value === locatieParam) { sel.value = locatieParam; break; }
     }
+    // Als locatie niet in dropdown staat, voeg toe
+    if (sel.value !== locatieParam) {
+      const opt = document.createElement('option');
+      opt.value = locatieParam; opt.textContent = locatieParam;
+      sel.appendChild(opt); sel.value = locatieParam;
+    }
+    updateOnderwerp();
+  }
+
+  // Datum van vandaag instellen
+  if (!document.getElementById('datum').value) {
+    document.getElementById('datum').value = new Date().toISOString().split('T')[0];
+    updateOnderwerp();
+  }
+
+  // Auteur_id opslaan voor later
+  window._auteurId = auth.profiel.id;
+  window._gebruikerNaam = auth.profiel.naam;
+
+  // Naam invullen als naamInput leeg is
+  if (!document.getElementById('naamInput').value) {
+    document.getElementById('naamInput').value = auth.profiel.naam || '';
   }
 })();
 </script>
