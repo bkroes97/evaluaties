@@ -124,7 +124,7 @@
 // Supabase init — vervang met jouw project URL en anon key
 const _authUrl  = 'https://gobqaidvirtadgpduznd.supabase.co';
 const _authAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
-const supabase = window.supabase.createClient(_authUrl, _authAnon);
+var supabase = window.supabase.createClient(_authUrl, _authAnon);
 
 function switchTab(tab) {
   document.getElementById('formLogin').classList.toggle('hidden', tab !== 'login');
