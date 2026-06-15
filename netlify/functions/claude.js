@@ -38,39 +38,51 @@ exports.handler = async (event) => {
     if (body.saveToSupabase) {
       const evaluatieTekst = data.content?.map(b => b.text || '').join('') || '';
 
-      const supabaseRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/evaluaties`, {
-        method: 'POST',
+      const existingId = body.meta.eval_id || null;
+      const record = {
+        datum:           body.meta.datum          || null,
+        locatie:         body.meta.locatie         || null,
+        manager:         body.meta.manager         || null,
+        auteur_id:       body.meta.auteur_id       || null,
+        opentijd:        body.meta.opentijd        || null,
+        sluittijd:       body.meta.sluittijd       || null,
+        onderwerp:       body.meta.onderwerp       || null,
+        memo_verloop:    body.meta.memo_verloop    || null,
+        memo_algemeen:   body.meta.memo_algemeen   || null,
+        memo_personeel:  body.meta.memo_personeel  || null,
+        memo_dj:         body.meta.memo_dj         || null,
+        memo_lichten:    body.meta.memo_lichten    || null,
+        memo_veiligheid: body.meta.memo_veiligheid || null,
+        memo_td:         body.meta.memo_td         || null,
+        memo_overig:     body.meta.memo_overig     || null,
+        evaluatie_tekst: evaluatieTekst,
+        status:          'afgerond'
+      };
+
+      // Als er al een concept bestaat: PATCH, anders POST
+      const supabaseUrl = existingId
+        ? `${process.env.SUPABASE_URL}/rest/v1/evaluaties?id=eq.${existingId}`
+        : `${process.env.SUPABASE_URL}/rest/v1/evaluaties`;
+      const supabaseMethod = existingId ? 'PATCH' : 'POST';
+
+      const supabaseRes = await fetch(supabaseUrl, {
+        method: supabaseMethod,
         headers: {
           'Content-Type': 'application/json',
           'apikey': process.env.SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          'Prefer': 'return=representation'  // geeft de nieuwe rij terug incl. id
+          'Prefer': 'return=representation'
         },
-        body: JSON.stringify({
-          datum:           body.meta.datum          || null,
-          locatie:         body.meta.locatie         || null,
-          manager:         body.meta.manager         || null,
-          opentijd:        body.meta.opentijd        || null,
-          sluittijd:       body.meta.sluittijd       || null,
-          memo_verloop:    body.meta.memo_verloop    || null,
-          memo_algemeen:   body.meta.memo_algemeen   || null,
-          memo_personeel:  body.meta.memo_personeel  || null,
-          memo_dj:         body.meta.memo_dj         || null,
-          memo_lichten:    body.meta.memo_lichten    || null,
-          memo_veiligheid: body.meta.memo_veiligheid || null,
-          memo_td:         body.meta.memo_td         || null,
-          memo_overig:     body.meta.memo_overig     || null,
-          evaluatie_tekst: evaluatieTekst
-        })
+        body: JSON.stringify(record)
       });
 
       if (!supabaseRes.ok) {
         const errText = await supabaseRes.text();
         supabaseError = `Supabase ${supabaseRes.status}: ${errText}`;
-        console.error('[claude.js] Supabase insert mislukt:', supabaseError);
+        console.error('[claude.js] Supabase fout:', supabaseError);
       } else {
         const inserted = await supabaseRes.json();
-        evalId = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id;
+        evalId = existingId || (Array.isArray(inserted) ? inserted[0]?.id : inserted?.id);
       }
     }
 
