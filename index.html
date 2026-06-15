@@ -675,14 +675,14 @@ function saveKey(datum, locatie, onderwerp) {
 let autoSaveTimer = null;
 let lastSavedKey = null;
 
-function saveProgress(silent = false) {
+async function saveProgress(silent = false) {
   const data = getFormData();
   const key = saveKey(data.datum, data.locatie, data.onderwerp);
   localStorage.setItem(key, JSON.stringify(data));
-  // Als de key veranderd is (bijv. nieuwe locatie/datum), update de lijst
   if (key !== lastSavedKey) {
-      lastSavedKey = key;
+    lastSavedKey = key;
   }
+
   // Update save button
   const icon = document.getElementById('saveBtnIcon');
   const txt  = document.getElementById('saveBtnTxt');
@@ -693,7 +693,50 @@ function saveProgress(silent = false) {
     if (icon) icon.className = 'ti ti-device-floppy';
     if (txt)  txt.textContent = 'Opslaan';
   }, 2000);
+
+  // Sla ook op in Supabase als concept
+  await slaConceptOp(data);
+
   if (!silent) showToast('Opgeslagen!');
+}
+
+async function slaConceptOp(data) {
+  try {
+    const naam    = data.naam || document.getElementById('naamInput').value.trim() || 'Manager';
+    const memoMeta = {};
+    for (const cat of CATS) {
+      memoMeta['memo_' + cat] = (data.memos?.[cat] || []).map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
+    }
+    const meta = {
+      manager: naam,
+      datum: data.datum,
+      locatie: data.locatie,
+      opentijd: data.openTijd,
+      sluittijd: data.sluitTijd,
+      onderwerp: data.onderwerp,
+      auteur_id: window._auteurId || null,
+      ...memoMeta
+    };
+
+    const res = await fetch('/.netlify/functions/opslaan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: currentEvalId || null,
+        evaluatie_tekst: null,
+        status: 'concept',
+        meta
+      })
+    });
+
+    const result = await res.json();
+    if (result.id && !currentEvalId) {
+      currentEvalId = result.id;
+      console.log('[concept] opgeslagen met id:', currentEvalId);
+    }
+  } catch(e) {
+    console.warn('[concept] opslaan mislukt:', e.message);
+  }
 }
 
 function scheduleAutoSave() {
