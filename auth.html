@@ -156,11 +156,7 @@ async function checkEnRedirect(user) {
   }
 
   // Doorsturen op basis van rol
-  if (profiel.rol === 'admin') {
-    window.location.href = '/admin.html';
-  } else {
-    window.location.href = '/locatie.html';
-  }
+  window.location.href = '/locatie.html';
 }
 
 async function inloggen() {
