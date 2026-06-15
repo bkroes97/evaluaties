@@ -804,13 +804,6 @@ async function generateEval() {
   btn.insertBefore(spin, txt);
   txt.textContent = 'Evaluatie schrijven...';
 
-  // Zorg dat er eerst een concept bestaat in Supabase zodat we een id hebben
-  if (!currentEvalId) {
-    txt.textContent = 'Opslaan...';
-    const data = getFormData();
-    await slaConceptOp(data);
-  }
-
   const datum     = document.getElementById('datum').value;
   const locatie   = document.getElementById('locatie').value.trim();
   const open      = document.getElementById('openTijd').value;
