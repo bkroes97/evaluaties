@@ -121,9 +121,9 @@
 </div>
 
 <script>
-const SUPABASE_URL  = 'https://gobqaidvirtadgpduznd.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const _adminUrl  = 'https://gobqaidvirtadgpduznd.supabase.co';
+const _adminAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
+const supabase = window.supabase.createClient(_adminUrl, _adminAnon);
 
 const ROLLEN = ['admin','rayonmanager','bedrijfsleider','shiftmanager','kijker'];
 const ROL_LABELS = { admin:'Admin', rayonmanager:'Rayonmanager', bedrijfsleider:'Bedrijfsleider', shiftmanager:'Shiftmanager', kijker:'Kijker' };
