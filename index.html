@@ -851,7 +851,7 @@ Memo's:
 ${memoTekst}`;
 
   try {
-    const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
+    const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, onderwerp, auteur_id: window._auteurId || null, eval_id: currentEvalId || null, ...memoMeta };
     const json = await callClaude(
       { model: 'claude-sonnet-4-5', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] },
       meta,
@@ -932,7 +932,7 @@ async function saveEdit() {
     for (const cat of CATS) {
       memoMeta['memo_' + cat] = memos[cat].map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
     }
-    const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
+    const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, onderwerp, auteur_id: window._auteurId || null, eval_id: currentEvalId || null, ...memoMeta };
 
     if (currentEvalId) {
       // PATCH: overschrijf bestaande rij
@@ -1138,6 +1138,8 @@ async function laadEvaluatieUitSupabase(evalId) {
     document.getElementById('openTijd').value = eval_.opentijd || '23:00';
     document.getElementById('sluitTijd').value = eval_.sluittijd || '05:00';
     document.getElementById('onderwerp').value = eval_.onderwerp || '';
+    // Als onderwerp leeg is, automatisch genereren op basis van locatie + datum
+    if (!eval_.onderwerp) updateOnderwerp();
 
     // Locatie instellen
     if (eval_.locatie) {
