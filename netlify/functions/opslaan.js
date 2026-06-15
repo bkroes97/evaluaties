@@ -39,8 +39,8 @@ exports.handler = async (event) => {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': process.env.SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+            'apikey': process.env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
             'Prefer': 'return=representation'
           },
           body: JSON.stringify(record)
@@ -54,8 +54,8 @@ exports.handler = async (event) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': process.env.SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+            'apikey': process.env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
             'Prefer': 'return=representation'
           },
           body: JSON.stringify(record)
