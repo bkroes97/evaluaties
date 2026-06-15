@@ -370,14 +370,21 @@ function renderLijst() {
 function renderCard(e, i) {
   const datum = e.datum ? formatDatum(e.datum) : '—';
   const tijden = [e.opentijd, e.sluittijd].filter(Boolean).join(' – ');
+  const isConcept = !e.evaluatie_tekst || e.status === 'concept';
 
-  return `<div class="eval-card" id="card-${i}">
-    <div class="eval-header" onclick="toggleCard(${i})">
+  // Concept: klik gaat naar index.html om verder te gaan
+  const headeronclick = isConcept
+    ? `openConcept('${escHtml(e.locatie || '')}', '${e.id}')`
+    : `toggleCard(${i})`;
+
+  return `<div class="eval-card ${isConcept ? 'concept' : ''}" id="card-${i}">
+    <div class="eval-header" onclick="${headeronclick}" style="${isConcept ? 'cursor:pointer;' : ''}">
       <span class="eval-date">${datum}</span>
       <span class="eval-locatie">${escHtml(e.locatie || 'Onbekend')}</span>
+      ${isConcept ? '<span class="concept-badge"><i class="ti ti-pencil" style="font-size:10px;"></i> Concept</span>' : ''}
       <span class="eval-manager">${escHtml(e.manager || '')}</span>
       ${tijden ? `<span class="eval-tijd"><i class="ti ti-clock" style="font-size:11px;"></i> ${escHtml(tijden)}</span>` : ''}
-      <i class="ti ti-chevron-down eval-chevron"></i>
+      <i class="ti ti-${isConcept ? 'arrow-right' : 'chevron-down'} eval-chevron"></i>
     </div>
     <div class="eval-body">
       <div class="tab-bar">
@@ -477,6 +484,13 @@ async function verwijder(i, event) {
     btn.innerHTML = '<i class="ti ti-trash"></i> Verwijderen';
     alert('Verwijderen mislukt: ' + err.message);
   }
+}
+
+function openConcept(locatie, id) {
+  const url = locatie
+    ? `/index.html?locatie=${encodeURIComponent(locatie)}&eval_id=${id}`
+    : `/index.html?eval_id=${id}`;
+  window.location.href = url;
 }
 
 // ── Helpers ──
