@@ -748,18 +748,8 @@ async function slaConceptOp(data) {
   }
 }
 
-function {
-  clearTimeout(autoSaveTimer);
-  // Alleen autosaven als er iets zinvols is ingevuld
-  const data = getFormData();
-  const heeftContent = data.datum || data.locatie || CATS.some(c => memos[c].length > 0);
-  if (!heeftContent) return;
-  // Toon 'Wijzigingen...' in de knop
-  const icon = document.getElementById('saveBtnIcon');
-  const txt  = document.getElementById('saveBtnTxt');
-  if (icon) icon.className = 'ti ti-dots';
-  if (txt)  txt.textContent = 'Wijzigingen...';
-  autoSaveTimer = setTimeout(() => { saveProgress(true); }, 2000);
+function scheduleAutoSave() {
+  // Autosave uitgeschakeld — gebruik de Opslaan knop
 }
 
 
