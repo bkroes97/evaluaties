@@ -137,18 +137,18 @@
 
   <!-- Onderwerp -->
   <div style="margin-bottom:1rem;">
-    <input type="text" id="onderwerp" oninput="scheduleAutoSave()" placeholder="Onderwerp / naam van deze avond, bijv. 'Vrijdagnacht techno editie'" style="width:100%;font-family:inherit;font-size:16px;font-weight:500;padding:10px 14px;border-radius:var(--radius-lg);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);" />
+    <input type="text" id="onderwerp"  placeholder="Onderwerp / naam van deze avond, bijv. 'Vrijdagnacht techno editie'" style="width:100%;font-family:inherit;font-size:16px;font-weight:500;padding:10px 14px;border-radius:var(--radius-lg);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);" />
   </div>
 
   <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-group">
       <span class="topbar-label">Datum:</span>
-      <input type="date" id="datum" onchange="updateOnderwerp();scheduleAutoSave()" />
+      <input type="date" id="datum" onchange="updateOnderwerp()" />
     </div>
     <div class="topbar-group">
       <span class="topbar-label">Locatie:</span>
-      <select id="locatie" onchange="updateOnderwerp();scheduleAutoSave()" style="font-family:inherit;font-size:13px;padding:5px 9px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);flex:1;min-width:0;">
+      <select id="locatie" onchange="updateOnderwerp()" style="font-family:inherit;font-size:13px;padding:5px 9px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);flex:1;min-width:0;">
         <option value="">— Kies locatie —</option>
         <option>Café Van Buren</option>
         <option>Club Rolluik</option>
@@ -163,7 +163,7 @@
     </div>
     <div class="topbar-group">
       <span class="topbar-label">Open:</span>
-      <input type="time" id="openTijd" onchange="scheduleAutoSave()" value="23:00" />
+      <input type="time" id="openTijd"  value="23:00" />
     </div>
     <div class="topbar-group">
       <span class="topbar-label">Sluit:</span>
@@ -446,7 +446,7 @@ function addMemo(cat, tekst) {
   memos[cat].push({ id, tekst, tijd: timeNow() });
   renderCat(cat);
   updateGenBtn();
-  scheduleAutoSave();
+
 }
 
 function addManualMemo(cat) {
@@ -461,7 +461,7 @@ function deleteMemo(cat, id) {
   memos[cat] = memos[cat].filter(m => m.id !== id);
   renderCat(cat);
   updateGenBtn();
-  scheduleAutoSave();
+
 }
 
 function openEditModal(cat, id) {
@@ -479,7 +479,7 @@ function saveEditModal() {
   const memo = memos[editModalCat].find(m => m.id === editModalId);
   if (memo) { memo.tekst = tekst; renderCat(editModalCat); }
   closeEditModal();
-  scheduleAutoSave();
+
 }
 
 function closeEditModal() {
@@ -616,7 +616,7 @@ function moveMemo(fromCat, id, toCat) {
   renderCat(fromCat);
   renderCat(toCat);
   updateGenBtn();
-  scheduleAutoSave();
+ ;
   showToast(`Memo verplaatst naar ${CAT_META[toCat].label}`);
 }
 
@@ -748,7 +748,7 @@ async function slaConceptOp(data) {
   }
 }
 
-function scheduleAutoSave() {
+function {
   clearTimeout(autoSaveTimer);
   // Alleen autosaven als er iets zinvols is ingevuld
   const data = getFormData();
