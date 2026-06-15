@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inloggen — Avondevaluatie</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefed;
+      --text: #1a1a1a; --text2: #666660; --text3: #999993;
+      --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+      --radius: 8px; --radius-lg: 12px;
+      --green-bg: #eaf3de; --green-text: #3b6d11;
+      --red-bg: #fcebeb; --red-text: #a32d2d;
+      --amber-bg: #faeeda; --amber-text: #633806;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c; --bg2: #272725; --bg3: #2f2f2d;
+        --text: #f0f0ee; --text2: #aaaaaa; --text3: #666660;
+        --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+        --green-bg: #173404; --green-text: #c0dd97;
+        --red-bg: #501313; --red-text: #f09595;
+        --amber-bg: #412402; --amber-text: #fac775;
+      }
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 400px; }
+    .logo { font-size: 18px; font-weight: 500; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; color: var(--text); }
+    .logo i { font-size: 22px; color: var(--text2); }
+    .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 1.5rem; }
+    .tab { flex: 1; padding: 8px; font-size: 13px; font-weight: 500; text-align: center; cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; transition: color 0.15s; }
+    .tab.active { color: var(--text); border-bottom-color: var(--text); }
+    .form { display: flex; flex-direction: column; gap: 12px; }
+    .form.hidden { display: none; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: 12px; color: var(--text2); }
+    input { font-family: inherit; font-size: 13px; padding: 8px 12px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); width: 100%; }
+    input:focus { outline: none; border-color: var(--text); }
+    .btn { padding: 10px; font-size: 13px; font-weight: 500; border-radius: var(--radius); border: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.15s; }
+    .btn-primary { background: var(--text); color: var(--bg); }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .msg { font-size: 12px; padding: 10px 12px; border-radius: var(--radius); display: none; }
+    .msg.error { background: var(--red-bg); color: var(--red-text); display: block; }
+    .msg.success { background: var(--green-bg); color: var(--green-text); display: block; }
+    .msg.warning { background: var(--amber-bg); color: var(--amber-text); display: block; }
+    .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .wachtscherm { text-align: center; padding: 1rem 0; }
+    .wachtscherm i { font-size: 40px; color: var(--text3); margin-bottom: 12px; display: block; }
+    .wachtscherm h2 { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
+    .wachtscherm p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+    .logout-link { font-size: 12px; color: var(--text3); text-align: center; margin-top: 16px; cursor: pointer; text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="card" id="authCard">
+  <div class="logo"><i class="ti ti-clipboard-text"></i> Avondevaluatie</div>
+
+  <!-- Wachtscherm -->
+  <div id="wachtscherm" style="display:none;">
+    <div class="wachtscherm">
+      <i class="ti ti-clock"></i>
+      <h2>Account wacht op goedkeuring</h2>
+      <p>Je account is aangemaakt maar moet nog worden goedgekeurd door een beheerder. Je ontvangt bericht zodra je toegang hebt.</p>
+    </div>
+    <p class="logout-link" onclick="uitloggen()">Uitloggen</p>
+  </div>
+
+  <!-- Login / Registreer tabs -->
+  <div id="authForms">
+    <div class="tabs">
+      <button class="tab active" id="tabLogin" onclick="switchTab('login')">Inloggen</button>
+      <button class="tab" id="tabReg" onclick="switchTab('registreer')">Account aanvragen</button>
+    </div>
+
+    <!-- Login form -->
+    <div class="form" id="formLogin">
+      <div class="msg" id="loginMsg"></div>
+      <div class="field">
+        <label>E-mailadres</label>
+        <input type="email" id="loginEmail" placeholder="jouw@email.nl" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>Wachtwoord</label>
+        <input type="password" id="loginPw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')inloggen()" />
+      </div>
+      <button class="btn btn-primary" id="loginBtn" onclick="inloggen()">
+        <i class="ti ti-login"></i> Inloggen
+      </button>
+    </div>
+
+    <!-- Registreer form -->
+    <div class="form hidden" id="formReg">
+      <div class="msg" id="regMsg"></div>
+      <div class="field">
+        <label>Volledige naam</label>
+        <input type="text" id="regNaam" placeholder="Voor- en achternaam" autocomplete="name" />
+      </div>
+      <div class="field">
+        <label>E-mailadres</label>
+        <input type="email" id="regEmail" placeholder="jouw@email.nl" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>Wachtwoord</label>
+        <input type="password" id="regPw" placeholder="Min. 8 tekens" autocomplete="new-password" />
+      </div>
+      <div class="field">
+        <label>Wachtwoord herhalen</label>
+        <input type="password" id="regPw2" placeholder="Herhaal wachtwoord" autocomplete="new-password" onkeydown="if(event.key==='Enter')registreren()" />
+      </div>
+      <button class="btn btn-primary" id="regBtn" onclick="registreren()">
+        <i class="ti ti-user-plus"></i> Account aanvragen
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Supabase init — vervang met jouw project URL en anon key
+const SUPABASE_URL  = 'https://gobqaidvirtadgpduznd.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+function switchTab(tab) {
+  document.getElementById('formLogin').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('formReg').classList.toggle('hidden', tab !== 'registreer');
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabReg').classList.toggle('active', tab === 'registreer');
+}
+
+function setMsg(id, tekst, type) {
+  const el = document.getElementById(id);
+  el.textContent = tekst;
+  el.className = 'msg ' + type;
+}
+
+async function checkEnRedirect(user) {
+  if (!user) return;
+  // Haal gebruikersprofiel op
+  const { data: profiel } = await supabase
+    .from('gebruikers')
+    .select('goedgekeurd, rol')
+    .eq('id', user.id)
+    .single();
+
+  if (!profiel || !profiel.goedgekeurd) {
+    // Wachtscherm tonen
+    document.getElementById('authForms').style.display = 'none';
+    document.getElementById('wachtscherm').style.display = 'block';
+    return;
+  }
+
+  // Doorsturen op basis van rol
+  if (profiel.rol === 'admin') {
+    window.location.href = '/admin.html';
+  } else {
+    window.location.href = '/index.html';
+  }
+}
+
+async function inloggen() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw    = document.getElementById('loginPw').value;
+  if (!email || !pw) { setMsg('loginMsg', 'Vul e-mail en wachtwoord in.', 'error'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Inloggen...';
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pw });
+  if (error) {
+    setMsg('loginMsg', 'Inloggen mislukt: ' + (error.message === 'Invalid login credentials' ? 'Onbekend e-mail of wachtwoord.' : error.message), 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-login"></i> Inloggen';
+    return;
+  }
+  await checkEnRedirect(data.user);
+}
+
+async function registreren() {
+  const naam  = document.getElementById('regNaam').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pw    = document.getElementById('regPw').value;
+  const pw2   = document.getElementById('regPw2').value;
+
+  if (!naam || !email || !pw) { setMsg('regMsg', 'Vul alle velden in.', 'error'); return; }
+  if (pw.length < 8) { setMsg('regMsg', 'Wachtwoord moet minimaal 8 tekens zijn.', 'error'); return; }
+  if (pw !== pw2) { setMsg('regMsg', 'Wachtwoorden komen niet overeen.', 'error'); return; }
+
+  const btn = document.getElementById('regBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Account aanvragen...';
+
+  // Maak auth gebruiker aan
+  const { data, error } = await supabase.auth.signUp({ email, password: pw });
+  if (error) {
+    setMsg('regMsg', 'Fout: ' + error.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-user-plus"></i> Account aanvragen';
+    return;
+  }
+
+  // Sla profiel op in gebruikers tabel
+  if (data.user) {
+    await supabase.from('gebruikers').insert({
+      id: data.user.id,
+      naam,
+      email,
+      rol: 'shiftmanager',
+      goedgekeurd: false
+    });
+  }
+
+  setMsg('regMsg', 'Account aangevraagd! Een beheerder keurt je account goed.', 'success');
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-user-plus"></i> Account aanvragen';
+}
+
+async function uitloggen() {
+  await supabase.auth.signOut();
+  window.location.reload();
+}
+
+// Check bij laden of gebruiker al ingelogd is
+(async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) await checkEnRedirect(session.user);
+})();
+</script>
+</body>
+</html>
