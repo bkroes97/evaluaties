@@ -677,52 +677,23 @@ let lastSavedKey = null;
 
 async function saveProgress(silent = false) {
   const data = getFormData();
+
+  // 1. Lokaal opslaan
   const key = saveKey(data.datum, data.locatie, data.onderwerp);
   localStorage.setItem(key, JSON.stringify(data));
-  if (key !== lastSavedKey) {
-    lastSavedKey = key;
-  }
+  if (key !== lastSavedKey) lastSavedKey = key;
 
-  // Update save button
+  // 2. Opslaan in Supabase als concept
   const icon = document.getElementById('saveBtnIcon');
   const txt  = document.getElementById('saveBtnTxt');
-  if (icon) icon.className = 'ti ti-check';
-  if (txt)  txt.textContent = 'Opgeslagen';
-  clearTimeout(window._saveBtnTimer);
-  window._saveBtnTimer = setTimeout(() => {
-    if (icon) icon.className = 'ti ti-device-floppy';
-    if (txt)  txt.textContent = 'Opslaan';
-  }, 2000);
+  if (icon) icon.className = 'ti ti-loader';
+  if (txt)  txt.textContent = 'Opslaan...';
 
-  // Sla ook op in Supabase als concept
-  await slaConceptOp(data);
-
-  if (!silent) showToast('Opgeslagen!');
-}
-
-async function slaConceptOp(data) {
   try {
-    const naam    = data.naam || document.getElementById('naamInput').value.trim() || 'Manager';
+    const naam = data.naam || '';
     const memoMeta = {};
     for (const cat of CATS) {
       memoMeta['memo_' + cat] = (data.memos?.[cat] || []).map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
-    }
-    const meta = {
-      manager: naam,
-      datum: data.datum,
-      locatie: data.locatie,
-      opentijd: data.openTijd,
-      sluittijd: data.sluitTijd,
-      onderwerp: data.onderwerp,
-      auteur_id: window._auteurId || null,
-      ...memoMeta
-    };
-
-    // Herstel id uit sessionStorage als die er is
-    const sessionKey = `evalId_${data.datum}_${data.locatie}`;
-    if (!currentEvalId) {
-      const stored = sessionStorage.getItem(sessionKey);
-      if (stored) currentEvalId = stored;
     }
 
     const res = await fetch('/.netlify/functions/opslaan', {
@@ -730,23 +701,47 @@ async function slaConceptOp(data) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: currentEvalId || null,
-        evaluatie_tekst: null,
         status: 'concept',
-        meta
+        meta: {
+          manager: naam,
+          datum: data.datum,
+          locatie: data.locatie,
+          opentijd: data.openTijd,
+          sluittijd: data.sluitTijd,
+          onderwerp: data.onderwerp,
+          auteur_id: window._auteurId || null,
+          ...memoMeta
+        }
       })
     });
 
     const result = await res.json();
     if (result.id) {
       currentEvalId = result.id;
-      // Bewaar id in sessionStorage zodat het bewaard blijft bij navigatie
-      sessionStorage.setItem(sessionKey, result.id);
-      console.log('[concept] opgeslagen met id:', currentEvalId);
+      // Sla id op in sessionStorage per datum+locatie
+      if (data.datum && data.locatie) {
+        sessionStorage.setItem(`evalId_${data.datum}_${data.locatie}`, result.id);
+      }
     }
+
+    if (icon) icon.className = 'ti ti-check';
+    if (txt)  txt.textContent = 'Opgeslagen';
   } catch(e) {
-    console.warn('[concept] opslaan mislukt:', e.message);
+    console.warn('[save] Supabase fout:', e.message);
+    if (icon) icon.className = 'ti ti-check';
+    if (txt)  txt.textContent = 'Opgeslagen (lokaal)';
   }
+
+  clearTimeout(window._saveBtnTimer);
+  window._saveBtnTimer = setTimeout(() => {
+    if (icon) icon.className = 'ti ti-device-floppy';
+    if (txt)  txt.textContent = 'Opslaan';
+  }, 2000);
+
+  if (!silent) showToast('Opgeslagen!');
 }
+
+// slaConceptOp verwijderd
 
 function scheduleAutoSave() {
   // Autosave uitgeschakeld — gebruik de Opslaan knop
