@@ -185,6 +185,12 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
     .eval-card { animation: fadein 0.2s ease; }
+    .edit-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+    .edit-modal-overlay.show { display: flex; }
+    .edit-modal { background: var(--bg); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 600px; width: 100%; border: 0.5px solid var(--border2); max-height: 90vh; display: flex; flex-direction: column; gap: 12px; }
+    .edit-modal h2 { font-size: 16px; font-weight: 500; }
+    .edit-modal textarea { width: 100%; font-family: inherit; font-size: 13px; padding: 10px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); resize: vertical; min-height: 300px; flex: 1; }
+    .edit-modal-btns { display: flex; gap: 8px; }
   </style>
 </head>
 <body>
@@ -256,6 +262,18 @@
     </div>
   </div>
 
+</div>
+
+<!-- Bewerk modal -->
+<div class="edit-modal-overlay" id="editModalOverlay">
+  <div class="edit-modal">
+    <h2><i class="ti ti-pencil"></i> Evaluatie bewerken</h2>
+    <textarea id="editModalTekst" placeholder="Evaluatietekst..."></textarea>
+    <div class="edit-modal-btns">
+      <button class="btn btn-primary" onclick="slaBewerktOp()"><i class="ti ti-device-floppy" id="bewerkSaveIcon"></i><span id="bewerkSaveTxt">Opslaan</span></button>
+      <button class="btn" onclick="sluitBewerken()"><i class="ti ti-x"></i> Annuleren</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -405,6 +423,7 @@ function renderCard(e, i) {
         </div>
       </div>
       <div class="eval-actions">
+        <button class="btn btn-amber" onclick="openBewerken(${i})" style="background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-text);"><i class="ti ti-pencil"></i> Bewerken</button>
         <button class="btn" onclick="kopieer(${i})"><i class="ti ti-copy" id="copy-icon-${i}"></i><span id="copy-txt-${i}">Kopieer</span></button>
         <button class="btn btn-green" onclick="download(${i})"><i class="ti ti-download"></i> Download .txt</button>
         <button class="btn" onclick="mail(${i})"><i class="ti ti-mail"></i> E-mail</button>
@@ -485,6 +504,65 @@ async function verwijder(i, event) {
     alert('Verwijderen mislukt: ' + err.message);
   }
 }
+
+let bewerkIndex = null;
+
+function openBewerken(i) {
+  bewerkIndex = i;
+  const e = gefilterd[i];
+  document.getElementById('editModalTekst').value = e.evaluatie_tekst || '';
+  document.getElementById('editModalOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('editModalTekst').focus(), 50);
+}
+
+function sluitBewerken() {
+  document.getElementById('editModalOverlay').classList.remove('show');
+  bewerkIndex = null;
+}
+
+async function slaBewerktOp() {
+  const tekst = document.getElementById('editModalTekst').value.trim();
+  if (!tekst || bewerkIndex === null) return;
+
+  const icon = document.getElementById('bewerkSaveIcon');
+  const txt  = document.getElementById('bewerkSaveTxt');
+  icon.className = 'ti ti-loader';
+  txt.textContent = 'Opslaan...';
+
+  const e = gefilterd[bewerkIndex];
+  try {
+    const res = await fetch('/.netlify/functions/opslaan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: e.id,
+        evaluatie_tekst: tekst,
+        status: 'afgerond',
+        meta: {
+          datum: e.datum, locatie: e.locatie, manager: e.manager,
+          opentijd: e.opentijd, sluittijd: e.sluittijd, onderwerp: e.onderwerp
+        }
+      })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    // Update lokaal
+    gefilterd[bewerkIndex].evaluatie_tekst = tekst;
+    alleEvaluaties.find(ev => ev.id === e.id).evaluatie_tekst = tekst;
+    renderLijst();
+    sluitBewerken();
+  } catch(err) {
+    alert('Opslaan mislukt: ' + err.message);
+  } finally {
+    icon.className = 'ti ti-device-floppy';
+    txt.textContent = 'Opslaan';
+  }
+}
+
+// Sluit modal bij klik buiten
+document.addEventListener('click', e => {
+  if (e.target === document.getElementById('editModalOverlay')) sluitBewerken();
+});
 
 function openConcept(locatie, id) {
   const url = locatie
