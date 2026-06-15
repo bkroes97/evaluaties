@@ -1,49 +1,1195 @@
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'GET') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Avondevaluatie</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefed;
+      --text: #1a1a1a; --text2: #666660; --text3: #999993;
+      --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+      --radius: 8px; --radius-lg: 12px;
+      --green-bg: #eaf3de; --green-text: #3b6d11;
+      --red: #a32d2d; --red-bg: #fcebeb;
+      --amber-bg: #faeeda; --amber-text: #633806;
+      --blue-bg: #e6f1fb; --blue-text: #0c447c;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c; --bg2: #272725; --bg3: #2f2f2d;
+        --text: #f0f0ee; --text2: #aaaaaa; --text3: #666660;
+        --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+        --green-bg: #173404; --green-text: #c0dd97;
+        --red: #f09595; --red-bg: #501313;
+        --amber-bg: #412402; --amber-text: #fac775;
+        --blue-bg: #042c53; --blue-text: #b5d4f4;
+      }
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding: 1.5rem 1rem 3rem; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 8px; }
+    h1 { font-size: 20px; font-weight: 500; }
+    .header-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Topbar */
+    .topbar { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .topbar-group { display: flex; align-items: center; gap: 6px; }
+    .topbar-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+    .topbar input { font-family: inherit; font-size: 13px; padding: 5px 9px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); flex: 1; min-width: 0; }
+
+    /* Mic */
+    .mic-center { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 1.25rem; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 1rem; }
+    .mic-btn { width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--border2); background: var(--bg); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 26px; transition: all 0.15s; }
+    .mic-btn:hover { background: var(--bg2); }
+    .mic-btn.recording { border-color: var(--red); background: var(--red-bg); color: var(--red); animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1);}50%{transform:scale(1.07);} }
+    .mic-status { font-size: 13px; color: var(--text2); text-align: center; }
+    .mic-status.active { color: var(--red); font-weight: 500; }
+    .interim { font-size: 12px; color: var(--text3); font-style: italic; min-height: 16px; text-align: center; max-width: 500px; line-height: 1.5; }
+    .no-support { background: var(--amber-bg); color: var(--amber-text); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; margin-bottom: 1rem; display: none; }
+
+    /* Categories */
+    .cats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+    @media (max-width: 520px) { .cats { grid-template-columns: 1fr; } .topbar { grid-template-columns: 1fr; } }
+    .cat-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 10px 12px; }
+    .cat-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .cat-icon { font-size: 15px; color: var(--text2); }
+    .cat-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .cat-count { margin-left: auto; font-size: 11px; padding: 2px 7px; border-radius: 20px; background: var(--bg2); color: var(--text2); }
+    .cat-count.has { background: var(--green-bg); color: var(--green-text); }
+    .memo-list { display: flex; flex-direction: column; gap: 5px; min-height: 28px; }
+    .memo-item { font-size: 12px; background: var(--bg2); border-radius: var(--radius); padding: 0; overflow: hidden; border: 0.5px solid transparent; cursor: grab; user-select: none; }
+    .memo-item.editing { border-color: var(--border2); }
+    .memo-item.dragging { opacity: 0.4; cursor: grabbing; }
+    .memo-item.drag-over { border-color: var(--blue-text); background: var(--blue-bg); }
+    .memo-list.drop-target { background: var(--blue-bg); border-radius: var(--radius); outline: 1.5px dashed var(--blue-text); }
+    .memo-view { display: flex; gap: 6px; align-items: flex-start; padding: 6px 8px; }
+    .memo-time { font-size: 11px; color: var(--text3); white-space: nowrap; margin-top: 1px; flex-shrink: 0; }
+    .memo-txt { flex: 1; color: var(--text2); line-height: 1.5; cursor: pointer; }
+    .memo-txt:hover { color: var(--text); }
+    .memo-actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .memo-icon-btn { cursor: pointer; color: var(--text3); font-size: 13px; padding: 2px; border-radius: 4px; }
+    .memo-icon-btn:hover { color: var(--text); background: var(--bg3); }
+    .memo-icon-btn.del:hover { color: var(--red); }
+    .memo-edit-area { padding: 6px 8px; display: none; }
+    .memo-edit-area.show { display: block; }
+    .memo-edit-input { width: 100%; font-family: inherit; font-size: 12px; padding: 5px 7px; border-radius: 6px; border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); resize: vertical; min-height: 50px; }
+    .memo-edit-btns { display: flex; gap: 5px; margin-top: 5px; }
+    .memo-edit-save { padding: 4px 10px; font-size: 11px; border: 0.5px solid var(--border2); border-radius: 6px; background: var(--green-bg); color: var(--green-text); cursor: pointer; font-family: inherit; }
+    .memo-edit-cancel { padding: 4px 10px; font-size: 11px; border: 0.5px solid var(--border2); border-radius: 6px; background: var(--bg2); color: var(--text2); cursor: pointer; font-family: inherit; }
+    .add-memo-row { margin-top: 6px; display: flex; gap: 5px; }
+    .add-memo-input { flex: 1; font-family: inherit; font-size: 12px; padding: 5px 8px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); }
+    .add-memo-input::placeholder { color: var(--text3); }
+    .add-memo-btn { padding: 5px 10px; font-size: 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text2); cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .add-memo-btn:hover { background: var(--bg3); }
+    .empty-hint { font-size: 12px; color: var(--text3); font-style: italic; }
+
+    /* Buttons */
+    .btn { padding: 8px 14px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text2); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; font-family: inherit; }
+    .btn:hover { background: var(--bg2); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn-primary:hover { opacity: 0.85; background: var(--text); }
+    .btn-green { background: var(--green-bg); color: var(--green-text); border-color: var(--green-text); }
+    .btn-green:hover { opacity: 0.85; }
+    .gen-btn { width: 100%; padding: 12px; font-size: 15px; font-weight: 500; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s; margin-bottom: 1rem; font-family: inherit; }
+    .gen-btn:hover { background: var(--bg2); }
+    .gen-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Output */
+    .output-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; display: none; }
+    .output-label { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .saved-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; background: var(--green-bg); color: var(--green-text); padding: 2px 8px; border-radius: 20px; }
+    .output-txt { font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; background: var(--bg2); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .output-edit { width: 100%; font-family: inherit; font-size: 14px; line-height: 1.8; color: var(--text); background: var(--bg2); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; border: 1.5px solid var(--border2); resize: vertical; min-height: 300px; display: none; }
+    .btn-amber { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber-text); }
+    .btn-amber:hover { opacity: 0.85; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--bg); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 480px; width: 100%; border: 0.5px solid var(--border2); }
+    .modal h2 { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
+    .modal p { font-size: 13px; color: var(--text2); margin-bottom: 12px; line-height: 1.6; }
+    .modal-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Avondevaluatie</h1>
+    <div class="header-btns">
+      <a href="/locatie.html" class="btn"><i class="ti ti-arrow-left"></i> Locaties</a>
+      <a href="/dashboard.html" class="btn"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
+      <button class="btn" id="saveBtn" onclick="saveProgress()"><i class="ti ti-device-floppy" id="saveBtnIcon"></i> <span id="saveBtnTxt">Opslaan</span></button>
+      <button class="btn" onclick="newAvond()"><i class="ti ti-plus"></i> Nieuwe avond</button>
+      <button class="btn" onclick="uitloggen()" title="Uitloggen"><i class="ti ti-logout"></i></button>
+    </div>
+  </div>
+
+  <!-- Onderwerp -->
+  <div style="margin-bottom:1rem;">
+    <input type="text" id="onderwerp" oninput="scheduleAutoSave()" placeholder="Onderwerp / naam van deze avond, bijv. 'Vrijdagnacht techno editie'" style="width:100%;font-family:inherit;font-size:16px;font-weight:500;padding:10px 14px;border-radius:var(--radius-lg);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);" />
+  </div>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-group">
+      <span class="topbar-label">Datum:</span>
+      <input type="date" id="datum" onchange="updateOnderwerp();scheduleAutoSave()" />
+    </div>
+    <div class="topbar-group">
+      <span class="topbar-label">Locatie:</span>
+      <select id="locatie" onchange="updateOnderwerp();scheduleAutoSave()" style="font-family:inherit;font-size:13px;padding:5px 9px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);flex:1;min-width:0;">
+        <option value="">— Kies locatie —</option>
+        <option>Café Van Buren</option>
+        <option>Club Rolluik</option>
+        <option>BAR 2</option>
+        <option>De Drie Gezusters</option>
+        <option>Heidi's Skihut</option>
+        <option>De Kunstbar</option>
+        <option>Club Novia</option>
+        <option>De Bieb</option>
+        <option>Stadsgarderobe 024</option>
+      </select>
+    </div>
+    <div class="topbar-group">
+      <span class="topbar-label">Open:</span>
+      <input type="time" id="openTijd" onchange="scheduleAutoSave()" value="23:00" />
+    </div>
+    <div class="topbar-group">
+      <span class="topbar-label">Sluit:</span>
+      <input type="time" id="sluitTijd" value="05:00" />
+    </div>
+    <div class="topbar-group" style="grid-column: span 2;">
+      <span class="topbar-label">Naam:</span>
+      <input type="text" id="naamInput" placeholder="Jouw naam" />
+    </div>
+  </div>
+
+  <div class="no-support" id="noSupport"></div>
+  <div class="no-support" id="iosChromeBanner" style="display:none;background:var(--amber-bg);color:var(--amber-text);">
+    <strong>Gebruik Safari voor spraak op iPhone/iPad</strong><br>
+    Chrome op iOS ondersteunt geen spraakherkenning — dat is een beperking van Apple, niet van de app.
+    Open deze pagina in <strong>Safari</strong> voor de microfoonfunctie. Typen via de tekstvakjes werkt wel gewoon in Chrome.
+  </div>
+
+  <!-- Mic -->
+  <div class="mic-center">
+    <button class="mic-btn" id="micBtn" onclick="toggleRec()">
+      <i class="ti ti-microphone" id="micIcon"></i>
+    </button>
+    <div class="mic-status" id="micStatus">Druk op de microfoon en spreek een memo in</div>
+    <div class="interim" id="interimTxt"></div>
+  </div>
+
+  <!-- Categorieën -->
+  <div class="cats" id="catsGrid"></div>
+
+  <button class="gen-btn" id="genBtn" onclick="generateEval()" disabled>
+    <i class="ti ti-sparkles" id="genIcon"></i>
+    <span id="genTxt">Genereer evaluatie</span>
+  </button>
+
+  <!-- Output -->
+  <div class="output-card" id="outputCard">
+    <div class="output-label">
+      <i class="ti ti-file-text"></i> Evaluatie
+      <span class="saved-badge" id="savedBadge" style="display:none;"><i class="ti ti-check"></i> Opgeslagen in database</span>
+      <span id="editBadge" style="display:none;margin-left:4px;font-size:11px;background:var(--amber-bg);color:var(--amber-text);padding:2px 8px;border-radius:20px;"><i class="ti ti-pencil"></i> Bewerkmode</span>
+    </div>
+    <div class="output-txt" id="outputTxt"></div>
+    <textarea class="output-edit" id="outputEdit" placeholder="Bewerk de evaluatie hier..."></textarea>
+    <div class="btn-row" id="viewBtns">
+      <button class="btn btn-amber" onclick="startEdit()"><i class="ti ti-pencil"></i> Bewerken</button>
+      <button class="btn" onclick="copyOutput()"><i class="ti ti-copy" id="copyIcon"></i><span id="copyTxt">Kopieer tekst</span></button>
+      <button class="btn btn-green" onclick="downloadTxt()"><i class="ti ti-download"></i> Download .txt</button>
+      <button class="btn" onclick="openMail()"><i class="ti ti-mail"></i> Open in e-mail</button>
+    </div>
+    <div class="btn-row" id="editBtns" style="display:none;">
+      <button class="btn btn-primary" onclick="saveEdit()"><i class="ti ti-device-floppy" id="saveEditIcon"></i><span id="saveEditTxt">Opslaan</span></button>
+      <button class="btn" onclick="cancelEdit()"><i class="ti ti-x"></i> Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bewerk modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2>Memo bewerken</h2>
+    <textarea id="editModalInput" style="width:100%;font-family:inherit;font-size:13px;padding:8px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);resize:vertical;min-height:80px;margin-bottom:10px;"></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="saveEditModal()">Opslaan</button>
+      <button class="btn" onclick="closeEditModal()">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATS = ['verloop','algemeen','personeel','dj','lichten','veiligheid','td','overig'];
+const CAT_META = {
+  verloop:   { label: 'Verloop van de avond',  icon: 'ti-chart-line' },
+  algemeen:  { label: 'Algemeen',               icon: 'ti-info-circle' },
+  personeel: { label: 'Personeel',              icon: 'ti-users' },
+  dj:        { label: "DJ's",                   icon: 'ti-music' },
+  lichten:   { label: 'Lichten (LightJockey)',  icon: 'ti-bulb' },
+  veiligheid:{ label: 'Veiligheid',             icon: 'ti-shield' },
+  td:        { label: 'TD (Technische dienst)', icon: 'ti-tool' },
+  overig:    { label: 'Overig',                 icon: 'ti-dots-circle-horizontal' }
+};
+const CAT_LABELS_EVAL = {
+  verloop: 'Verloop van de avond', algemeen: 'Algemeen', personeel: 'Personeel',
+  dj: "DJ's", lichten: 'Lichten (LightJockey)', veiligheid: 'Veiligheid (Beveiliger)',
+  td: 'TD (Technische dienst)', overig: 'Overig'
+};
+
+let memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[], overig:[] };
+let recognition = null;
+let isRecording = false;
+let isStopping = false;
+let currentFinal = '';
+let currentInterim = '';
+let memoId = 0;
+let editModalCat = null;
+let editModalId = null;
+let currentEvalId = null;
+
+// ── Tijdshulp ──
+function timeNow() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+// ── API ──
+async function callClaude(payload, meta, saveToSupabase) {
+  const res = await fetch('/.netlify/functions/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ payload, meta: meta || {}, saveToSupabase: !!saveToSupabase })
+  });
+  const text = await res.text();
+  console.log('[callClaude] status:', res.status, '| body:', text.substring(0, 300));
+  if (!res.ok) throw new Error('Netlify function fout ' + res.status + ': ' + text.substring(0, 200));
+  try {
+    return JSON.parse(text);
+  } catch(e) {
+    throw new Error('Ongeldige JSON van function: ' + text.substring(0, 200));
+  }
+}
+
+// ── Spraakherkenning ──
+const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isIOSChrome  = isIOS && /CriOS/.test(navigator.userAgent);
+const isIOSSafari  = isIOS && /Safari/.test(navigator.userAgent) && !/CriOS/.test(navigator.userAgent);
+
+function initRec() {
+  // iOS Chrome: geen spraakherkenning mogelijk — toon melding en stop
+  if (isIOSChrome) {
+    document.getElementById('iosChromeBanner').style.display = 'block';
+    document.getElementById('micBtn').disabled = true;
+    document.getElementById('micBtn').title = 'Niet beschikbaar in Chrome op iOS — gebruik Safari';
+    document.getElementById('micStatus').textContent = 'Spraak werkt niet in Chrome op iOS — gebruik Safari';
+    document.getElementById('micIcon').className = 'ti ti-brand-safari';
+    return false;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    document.getElementById('noSupport').textContent = 'Spraakherkenning wordt niet ondersteund in deze browser. Gebruik Chrome (Android/desktop) of Safari (iPhone/iPad).';
+    document.getElementById('noSupport').style.display = 'block';
+    return false;
+  }
+  recognition = new SR();
+  recognition.lang = 'nl-NL';
+  recognition.continuous = !isIOS;   // iOS: false, anders: true
+  recognition.interimResults = true;
+
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t + ' ';
+      else interim += t;
+    }
+    if (final) currentFinal += final;
+    currentInterim = interim;
+    document.getElementById('interimTxt').textContent = (interim || currentFinal).trim();
+  };
+
+  recognition.onerror = (e) => {
+    // 'no-speech' en 'aborted' zijn geen echte fouten op mobiel — gewoon herstarten
+    if (e.error === 'no-speech' || e.error === 'aborted') {
+      if (isRecording && !isStopping) restartRec();
+      return;
+    }
+    if (!isStopping) {
+      console.warn('[mic] fout:', e.error);
+      document.getElementById('micStatus').textContent = 'Fout: ' + e.error;
+      resetMicUI();
+    }
+  };
+
+  recognition.onend = () => {
+    // Altijd herstarten zolang we opnemen (iOS stopt na elke utterance)
+    if (isRecording && !isStopping) restartRec();
+  };
+
+  return true;
+}
+
+function restartRec() {
+  try { recognition.start(); } catch(e) { /* al actief, negeer */ }
+}
+
+function toggleRec() {
+  if (!recognition && !initRec()) return;
+  if (isRecording) saveAndStop(); else startRec();
+}
+
+function startRec() {
+  currentFinal = ''; currentInterim = '';
+  isRecording = true; isStopping = false;
+  try { recognition.start(); } catch(e) { /* al actief */ }
+  document.getElementById('micBtn').classList.add('recording');
+  document.getElementById('micIcon').className = 'ti ti-player-stop';
+  document.getElementById('micStatus').textContent = 'Opname bezig — druk nogmaals om op te slaan';
+  document.getElementById('micStatus').className = 'mic-status active';
+  document.getElementById('interimTxt').textContent = '';
+}
+
+async function saveAndStop() {
+  isStopping = true; isRecording = false;
+  const tekst = (currentFinal + ' ' + currentInterim).trim();
+  try { recognition.stop(); } catch(e) { /* al gestopt */ }
+  resetMicUI();
+  if (tekst) {
+    document.getElementById('micStatus').textContent = 'Memo verwerken...';
+    document.getElementById('micBtn').disabled = true;
+    await sorteerMemo(tekst);
+    document.getElementById('micBtn').disabled = false;
+    document.getElementById('micStatus').textContent = 'Opgeslagen — druk op de microfoon voor een volgende memo';
+    document.getElementById('interimTxt').textContent = '';
+  } else {
+    document.getElementById('micStatus').textContent = 'Geen tekst herkend — probeer opnieuw';
+  }
+  isStopping = false;
+}
+
+function resetMicUI() {
+  document.getElementById('micBtn').classList.remove('recording');
+  document.getElementById('micIcon').className = 'ti ti-microphone';
+  document.getElementById('micStatus').className = 'mic-status';
+}
+
+// ── Sorteren ──
+async function sorteerMemo(tekst) {
+  let raw = '';
+  try {
+    const json = await callClaude({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1000,
+      messages: [{
+        role: 'user',
+        content: `Jij bent een categoriseer-tool. Je output is UITSLUITEND een JSON array. Geen tekst ervoor of erna.
+
+Categorieën en hun sleutel:
+- "verloop"    = hoe de avond verliep, drukte, bezoekersaantallen, opbouw
+- "algemeen"   = naam/concept van de avond, openingstijden, locatie, bijzonderheden
+- "personeel"  = barmedewerkers bij naam, hoe zij functioneerden
+- "dj"         = DJ-namen, hun set of muziekkeuze
+- "lichten"    = lightjockey, lichtshow, sfeerverlichting
+- "veiligheid" = portiers/beveiligers, incidenten, Code Rood, vechtpartijen
+- "td"         = technische dienst, geluidsproblemen, kapotte apparatuur
+- "overig"     = past echt nergens anders
+
+Memo om te splitsen en categoriseren:
+${tekst}
+
+Geef elk fragment als object in de array. Voorbeeld van verwacht formaat:
+[{"cat":"verloop","tekst":"Het begon rustig en liep om 12 vol"},{"cat":"personeel","tekst":"Sebastiaan stond achter de bar"},{"cat":"veiligheid","tekst":"Code Rood de portier heeft dat goed ingegrepen"}]
+
+Jouw JSON array:`
+      }]
+    }, null, false);
+
+    raw = json.content?.[0]?.text?.trim() || '';
+    console.log('[sorteer] raw:', raw);
+
+    // Verwijder eventuele markdown opmaak
+    const clean = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/,'').trim();
+    // Zoek de array
+    const match = clean.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('geen JSON array gevonden');
+    const items = JSON.parse(match[0]);
+    if (!Array.isArray(items) || items.length === 0) throw new Error('lege array');
+
+    for (const item of items) {
+      if (!item?.tekst?.trim()) continue;
+      const cat = CATS.includes(item.cat) ? item.cat : 'algemeen';
+      addMemo(cat, item.tekst.trim());
+    }
+  } catch(e) {
+    console.error('[sorteer] fout:', e.message, '| raw:', raw);
+    addMemo('algemeen', tekst);
+  }
+}
+// ── Memo's ──
+function addMemo(cat, tekst) {
+  const id = ++memoId;
+  memos[cat].push({ id, tekst, tijd: timeNow() });
+  renderCat(cat);
+  updateGenBtn();
+  scheduleAutoSave();
+}
+
+function addManualMemo(cat) {
+  const inp = document.getElementById('add-' + cat);
+  const tekst = inp.value.trim();
+  if (!tekst) return;
+  addMemo(cat, tekst);
+  inp.value = '';
+}
+
+function deleteMemo(cat, id) {
+  memos[cat] = memos[cat].filter(m => m.id !== id);
+  renderCat(cat);
+  updateGenBtn();
+  scheduleAutoSave();
+}
+
+function openEditModal(cat, id) {
+  const memo = memos[cat].find(m => m.id === id);
+  if (!memo) return;
+  editModalCat = cat; editModalId = id;
+  document.getElementById('editModalInput').value = memo.tekst;
+  document.getElementById('editModal').classList.add('show');
+  setTimeout(() => document.getElementById('editModalInput').focus(), 50);
+}
+
+function saveEditModal() {
+  const tekst = document.getElementById('editModalInput').value.trim();
+  if (!tekst) return;
+  const memo = memos[editModalCat].find(m => m.id === editModalId);
+  if (memo) { memo.tekst = tekst; renderCat(editModalCat); }
+  closeEditModal();
+  scheduleAutoSave();
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('show');
+  editModalCat = null; editModalId = null;
+}
+
+document.getElementById('editModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('editModal')) closeEditModal();
+});
+
+function renderCat(cat) {
+  const items = memos[cat];
+  const card = document.getElementById('cat-' + cat);
+  if (!card) return;
+
+  const cnt = card.querySelector('.cat-count');
+  cnt.textContent = items.length;
+  cnt.className = 'cat-count' + (items.length > 0 ? ' has' : '');
+
+  const list = card.querySelector('.memo-list');
+  if (items.length === 0) {
+    list.innerHTML = '<span class="empty-hint">Nog geen memo\'s</span>';
+  } else {
+    list.innerHTML = items.map(m =>
+      `<div class="memo-item" id="memo-${m.id}" draggable="true"
+        ondragstart="onDragStart(event,'${cat}',${m.id})"
+        ondragend="onDragEnd(event)"
+        ondragover="onDragOver(event)"
+        ondragleave="onDragLeave(event)"
+        ondrop="onDrop(event,'${cat}',${m.id})">
+        <div class="memo-view">
+          <span class="memo-time">${m.tijd}</span>
+          <span class="memo-txt" onclick="openEditModal('${cat}',${m.id})">${escHtml(m.tekst)}</span>
+          <div class="memo-actions">
+            <span class="memo-icon-btn" style="cursor:grab;color:var(--text3);" title="Verslepen"><i class="ti ti-grip-vertical"></i></span>
+            <span class="memo-icon-btn" onclick="openEditModal('${cat}',${m.id})" title="Bewerken"><i class="ti ti-pencil"></i></span>
+            <span class="memo-icon-btn del" onclick="deleteMemo('${cat}',${m.id})" title="Verwijderen"><i class="ti ti-x"></i></span>
+          </div>
+        </div>
+      </div>`
+    ).join('');
+    // Touch drag voor mobiel
+    items.forEach(m => {
+      const el = document.getElementById('memo-' + m.id);
+      if (el) initTouchDrag(el, cat, m.id);
+    });
+  }
+}
+
+function buildCatsGrid() {
+  const grid = document.getElementById('catsGrid');
+  grid.innerHTML = CATS.map(cat => {
+    const m = CAT_META[cat];
+    return `<div class="cat-card" id="cat-${cat}">
+      <div class="cat-header">
+        <i class="ti ${m.icon} cat-icon"></i>
+        <span class="cat-name">${m.label}</span>
+        <span class="cat-count" id="cnt-${cat}">0</span>
+      </div>
+      <div class="memo-list" id="list-${cat}"
+        ondragover="onListDragOver(event,'${cat}')"
+        ondragleave="onListDragLeave(event,'${cat}')"
+        ondrop="onListDrop(event,'${cat}')"><span class="empty-hint">Nog geen memo's</span></div>
+      <div class="add-memo-row">
+        <input class="add-memo-input" id="add-${cat}" placeholder="Typ hier een memo..." onkeydown="if(event.key==='Enter')addManualMemo('${cat}')" />
+        <button class="add-memo-btn" onclick="addManualMemo('${cat}')"><i class="ti ti-plus"></i> Voeg toe</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Drag & Drop ──
+let dragCat = null;
+let dragId  = null;
+
+function onDragStart(event, cat, id) {
+  dragCat = cat; dragId = id;
+  event.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => {
+    const el = document.getElementById('memo-' + id);
+    if (el) el.classList.add('dragging');
+  }, 0);
+}
+
+function onDragEnd(event) {
+  document.querySelectorAll('.memo-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+  document.querySelectorAll('.memo-list').forEach(el => el.classList.remove('drop-target'));
+}
+
+function onDragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  event.currentTarget.classList.add('drag-over');
+}
+
+function onDragLeave(event) {
+  event.currentTarget.classList.remove('drag-over');
+}
+
+function onDrop(event, targetCat, targetId) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.currentTarget.classList.remove('drag-over');
+  if (dragCat === null || dragId === null) return;
+  moveMemo(dragCat, dragId, targetCat);
+  dragCat = null; dragId = null;
+}
+
+function onListDragOver(event, cat) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  document.getElementById('list-' + cat)?.classList.add('drop-target');
+}
+
+function onListDragLeave(event, cat) {
+  document.getElementById('list-' + cat)?.classList.remove('drop-target');
+}
+
+function onListDrop(event, targetCat) {
+  event.preventDefault();
+  document.getElementById('list-' + targetCat)?.classList.remove('drop-target');
+  if (dragCat === null || dragId === null) return;
+  moveMemo(dragCat, dragId, targetCat);
+  dragCat = null; dragId = null;
+}
+
+function moveMemo(fromCat, id, toCat) {
+  if (fromCat === toCat) return;
+  const idx = memos[fromCat].findIndex(m => m.id === id);
+  if (idx === -1) return;
+  const [memo] = memos[fromCat].splice(idx, 1);
+  memos[toCat].push(memo);
+  renderCat(fromCat);
+  renderCat(toCat);
+  updateGenBtn();
+  scheduleAutoSave();
+  showToast(`Memo verplaatst naar ${CAT_META[toCat].label}`);
+}
+
+function updateGenBtn() {
+  const total = CATS.reduce((s,c) => s + memos[c].length, 0);
+  document.getElementById('genBtn').disabled = total === 0;
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Tussentijds opslaan (localStorage) ──
+function getFormData() {
+  return {
+    onderwerp: document.getElementById('onderwerp').value,
+    datum: document.getElementById('datum').value,
+    locatie: document.getElementById('locatie').value,
+    openTijd: document.getElementById('openTijd').value,
+    sluitTijd: document.getElementById('sluitTijd').value,
+    naam: document.getElementById('naamInput').value,
+    memos
+  };
+}
+
+function setFormData(data) {
+  document.getElementById('onderwerp').value = data.onderwerp || '';
+  document.getElementById('datum').value = data.datum || '';
+  document.getElementById('locatie').value = data.locatie || '';
+  document.getElementById('openTijd').value = data.openTijd || '23:00';
+  document.getElementById('sluitTijd').value = data.sluitTijd || '05:00';
+  document.getElementById('naamInput').value = data.naam || '';
+  memoId = 0;
+  memos = { verloop:[], algemeen:[], personeel:[], dj:[], lichten:[], veiligheid:[], td:[], overig:[] };
+  for (const cat of CATS) {
+    if (data.memos?.[cat]) {
+      for (const m of data.memos[cat]) {
+        memoId = Math.max(memoId, m.id);
+        memos[cat].push(m);
+      }
+    }
+    renderCat(cat);
+  }
+  updateGenBtn();
+  currentEvalId = null;
+  document.getElementById('outputCard').style.display = 'none';
+}
+
+function saveKey(datum, locatie, onderwerp) {
+  const d = datum || 'onbekend';
+  const l = locatie || 'onbekend';
+  const o = onderwerp ? onderwerp.replace(/\s+/g,'-').substring(0,30) : '';
+  return `eval_${d}_${l}${o ? '_' + o : ''}`;
+}
+
+let autoSaveTimer = null;
+let lastSavedKey = null;
+
+async function saveProgress(silent = false) {
+  const data = getFormData();
+  const key = saveKey(data.datum, data.locatie, data.onderwerp);
+  localStorage.setItem(key, JSON.stringify(data));
+  if (key !== lastSavedKey) {
+    lastSavedKey = key;
   }
 
+  // Update save button
+  const icon = document.getElementById('saveBtnIcon');
+  const txt  = document.getElementById('saveBtnTxt');
+  if (icon) icon.className = 'ti ti-check';
+  if (txt)  txt.textContent = 'Opgeslagen';
+  clearTimeout(window._saveBtnTimer);
+  window._saveBtnTimer = setTimeout(() => {
+    if (icon) icon.className = 'ti ti-device-floppy';
+    if (txt)  txt.textContent = 'Opslaan';
+  }, 2000);
+
+  // Sla ook op in Supabase als concept
+  await slaConceptOp(data);
+
+  if (!silent) showToast('Opgeslagen!');
+}
+
+async function slaConceptOp(data) {
   try {
-    const { locatie, manager, limit = 200, eval_id } = event.queryStringParameters || {};
-
-    // Haal auth token op uit header
-    const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
-    const token = authHeader.replace('Bearer ', '').trim() || process.env.SUPABASE_ANON_KEY;
-
-    let url = `${process.env.SUPABASE_URL}/rest/v1/evaluaties?select=*&order=aangemaakt_op.desc&limit=${limit}`;
-    if (eval_id) url += `&id=eq.${encodeURIComponent(eval_id)}`;
-    if (locatie) url += `&locatie=eq.${encodeURIComponent(locatie)}`;
-    if (manager) url += `&manager=eq.${encodeURIComponent(manager)}`;
-
-    console.log('[evaluaties.js] URL:', url);
-
-    const res = await fetch(url, {
-      headers: {
-        'apikey': process.env.SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const responseText = await res.text();
-    console.log('[evaluaties.js] status:', res.status, responseText.substring(0, 200));
-
-    if (!res.ok) {
-      return {
-        statusCode: res.status,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Supabase fout', detail: responseText })
-      };
+    const naam    = data.naam || document.getElementById('naamInput').value.trim() || 'Manager';
+    const memoMeta = {};
+    for (const cat of CATS) {
+      memoMeta['memo_' + cat] = (data.memos?.[cat] || []).map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
     }
-
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
-      body: responseText
+    const meta = {
+      manager: naam,
+      datum: data.datum,
+      locatie: data.locatie,
+      opentijd: data.openTijd,
+      sluittijd: data.sluitTijd,
+      onderwerp: data.onderwerp,
+      auteur_id: window._auteurId || null,
+      ...memoMeta
     };
 
-  } catch (err) {
-    console.error('[evaluaties.js] fout:', err);
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    const res = await fetch('/.netlify/functions/opslaan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: currentEvalId || null,
+        evaluatie_tekst: null,
+        status: 'concept',
+        meta
+      })
+    });
+
+    const result = await res.json();
+    if (result.id) {
+      currentEvalId = result.id;
+      console.log('[concept] opgeslagen met id:', currentEvalId);
+    }
+  } catch(e) {
+    console.warn('[concept] opslaan mislukt:', e.message);
   }
-};
+}
+
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  // Alleen autosaven als er iets zinvols is ingevuld
+  const data = getFormData();
+  const heeftContent = data.datum || data.locatie || CATS.some(c => memos[c].length > 0);
+  if (!heeftContent) return;
+  // Toon 'Wijzigingen...' in de knop
+  const icon = document.getElementById('saveBtnIcon');
+  const txt  = document.getElementById('saveBtnTxt');
+  if (icon) icon.className = 'ti ti-dots';
+  if (txt)  txt.textContent = 'Wijzigingen...';
+  autoSaveTimer = setTimeout(() => { saveProgress(true); }, 2000);
+}
+
+
+
+
+
+
+function newAvond() {
+  if (!confirm('Nieuwe avond beginnen? Niet-opgeslagen wijzigingen gaan verloren.')) return;
+  setFormData({});
+  document.getElementById('datum').value = new Date().toISOString().split('T')[0];
+
+}
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 18px;border-radius:20px;font-size:13px;z-index:200;transition:opacity 0.3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2000);
+}
+
+// ── Evaluatie genereren ──
+async function generateEval() {
+  const btn = document.getElementById('genBtn');
+  const icon = document.getElementById('genIcon');
+  const txt = document.getElementById('genTxt');
+  btn.disabled = true;
+  icon.style.display = 'none';
+  const spin = document.createElement('div');
+  spin.className = 'spinner';
+  btn.insertBefore(spin, txt);
+  txt.textContent = 'Evaluatie schrijven...';
+
+  const datum     = document.getElementById('datum').value;
+  const locatie   = document.getElementById('locatie').value.trim();
+  const open      = document.getElementById('openTijd').value;
+  const sluit     = document.getElementById('sluitTijd').value;
+  const naam      = document.getElementById('naamInput').value.trim() || 'Manager';
+  const onderwerp = document.getElementById('onderwerp').value.trim();
+
+  let memoTekst = '';
+  const memoMeta = {};
+  for (const cat of CATS) {
+    const catTekst = memos[cat].map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
+    memoMeta['memo_' + cat] = catTekst;
+    if (memos[cat].length > 0) {
+      memoTekst += `\n### ${CAT_LABELS_EVAL[cat]}\n`;
+      memos[cat].forEach(m => { memoTekst += `- [${m.tijd}] ${m.tekst}\n`; });
+    }
+  }
+
+  const prompt = `Je bent een professionele nachtclubmanager. Schrijf een volledige avondevaluatie op basis van de memo's hieronder. Gebruik dit exacte format:
+
+Beste,
+${onderwerp ? '\nOnderwerp: ' + onderwerp : ''}
+Datum: ${datum || 'onbekend'}
+Locatie: ${locatie || 'onbekend'}
+Opentijd: ${open}
+Sluittijd: ${sluit}
+
+VERLOOP VAN DE AVOND
+[vloeiende beschrijving]
+
+ALGEMEEN
+[algemene punten]
+
+PERSONEEL
+[over het personeel]
+
+DJ'S
+[over de DJ's]
+
+LICHTEN (LightJockey)
+[over de lichtshow]
+
+VEILIGHEID (Beveiliger)
+[over de beveiliging]
+
+TD (Technische dienst)
+[over technische zaken]
+
+OVERIG
+[overige punten]
+
+Met vriendelijke groet,
+${naam}
+
+Schrijf elke sectie in vloeiende volzinnen. Als er geen memo's zijn voor een categorie: "Geen bijzonderheden." Verzin geen feiten.
+
+Memo's:
+${memoTekst}`;
+
+  try {
+    const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
+    const json = await callClaude(
+      { model: 'claude-sonnet-4-5', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] },
+      meta,
+      true
+    );
+
+    const output = json.content?.map(b => b.text || '').join('');
+    if (!output) throw new Error('Geen tekst ontvangen van de API.');
+
+    currentEvalId = json.evalId || null;
+    document.getElementById('outputTxt').textContent = output;
+    document.getElementById('outputCard').style.display = 'block';
+    document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    if (json.supabaseError) {
+      document.getElementById('savedBadge').style.display = 'none';
+      showToast('⚠️ Evaluatie gegenereerd, maar opslaan in database mislukt.');
+      console.warn('Supabase fout:', json.supabaseError);
+    } else {
+      document.getElementById('savedBadge').style.display = 'inline-flex';
+      showToast('Evaluatie opgeslagen!');
+    }
+  } catch(e) {
+    alert('Er ging iets mis: ' + e.message);
+  } finally {
+    spin.remove();
+    icon.style.display = '';
+    txt.textContent = 'Genereer evaluatie';
+    btn.disabled = false;
+    updateGenBtn();
+  }
+}
+
+// ── Output acties ──
+function getOutputTekst() {
+  return document.getElementById('outputTxt').textContent;
+}
+
+// ── Bewerken ──
+function startEdit() {
+  const tekst = getOutputTekst();
+  document.getElementById('outputEdit').value = tekst;
+  document.getElementById('outputTxt').style.display = 'none';
+  document.getElementById('outputEdit').style.display = 'block';
+  document.getElementById('viewBtns').style.display = 'none';
+  document.getElementById('editBtns').style.display = 'flex';
+  document.getElementById('editBadge').style.display = 'inline-flex';
+  document.getElementById('outputEdit').focus();
+}
+
+function cancelEdit() {
+  document.getElementById('outputEdit').style.display = 'none';
+  document.getElementById('outputTxt').style.display = 'block';
+  document.getElementById('viewBtns').style.display = 'flex';
+  document.getElementById('editBtns').style.display = 'none';
+  document.getElementById('editBadge').style.display = 'none';
+}
+
+async function saveEdit() {
+  const tekst = document.getElementById('outputEdit').value.trim();
+  if (!tekst) return;
+
+  document.getElementById('outputTxt').textContent = tekst;
+  cancelEdit();
+
+  const icon = document.getElementById('saveEditIcon');
+  const txt = document.getElementById('saveEditTxt');
+  icon.className = 'ti ti-loader';
+  txt.textContent = 'Opslaan...';
+
+  try {
+    const datum   = document.getElementById('datum').value;
+    const locatie = document.getElementById('locatie').value;
+    const naam    = document.getElementById('naamInput').value.trim() || 'Manager';
+    const open    = document.getElementById('openTijd').value;
+    const sluit   = document.getElementById('sluitTijd').value;
+    const memoMeta = {};
+    for (const cat of CATS) {
+      memoMeta['memo_' + cat] = memos[cat].map(m => `[${m.tijd}] ${m.tekst}`).join(' | ');
+    }
+    const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, ...memoMeta };
+
+    if (currentEvalId) {
+      // PATCH: overschrijf bestaande rij
+      await fetch('/.netlify/functions/opslaan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentEvalId, evaluatie_tekst: tekst, meta })
+      });
+      showToast('Evaluatie bijgewerkt!');
+    } else {
+      // Nieuwe rij
+      const res = await fetch('/.netlify/functions/opslaan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ evaluatie_tekst: tekst, meta })
+      });
+      const data = await res.json();
+      if (data.id) currentEvalId = data.id;
+      showToast('Evaluatie opgeslagen!');
+    }
+    document.getElementById('savedBadge').style.display = 'inline-flex';
+  } catch(e) {
+    showToast('Opslaan mislukt: ' + e.message);
+  } finally {
+    icon.className = 'ti ti-device-floppy';
+    txt.textContent = 'Opslaan';
+  }
+}
+
+function copyOutput() {
+  navigator.clipboard.writeText(getOutputTekst()).then(() => {
+    document.getElementById('copyTxt').textContent = 'Gekopieerd!';
+    document.getElementById('copyIcon').className = 'ti ti-check';
+    setTimeout(() => {
+      document.getElementById('copyTxt').textContent = 'Kopieer tekst';
+      document.getElementById('copyIcon').className = 'ti ti-copy';
+    }, 2000);
+  });
+}
+
+function downloadTxt() {
+  const tekst = getOutputTekst();
+  const datum = document.getElementById('datum').value || 'evaluatie';
+  const locatie = document.getElementById('locatie').value.replace(/\s+/g, '-') || 'club';
+  const onderwerp = document.getElementById('onderwerp').value.trim().replace(/\s+/g, '-') || '';
+  const naam = [onderwerp, datum, locatie].filter(Boolean).join('-');
+  const blob = new Blob([tekst], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `evaluatie-${naam}.txt`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function openMail() {
+  const tekst = getOutputTekst();
+  const datum = document.getElementById('datum').value || '';
+  const locatie = document.getElementById('locatie').value || '';
+  const onderwerp = document.getElementById('onderwerp').value.trim() || '';
+  const subjectParts = ['Avondevaluatie', onderwerp, locatie, datum].filter(Boolean);
+  const subject = encodeURIComponent(subjectParts.join(' — '));
+  const body = encodeURIComponent(tekst);
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+// ── Onderwerp auto-invullen ──
+function updateOnderwerp() {
+  const locatie = document.getElementById('locatie').value;
+  const datum   = document.getElementById('datum').value;
+  if (!locatie || !datum) return;
+  const datumNl = new Date(datum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+  const huidig  = document.getElementById('onderwerp').value;
+  // Alleen overschrijven als het leeg is of als het al een auto-gegenereerde waarde heeft
+  if (!huidig || huidig.startsWith('Evaluatie ')) {
+    document.getElementById('onderwerp').value = `Evaluatie ${locatie} ${datumNl}`;
+  }
+}
+
+// ── Touch drag voor mobiel ──
+let touchDragCat = null, touchDragId = null, touchClone = null, touchOriginEl = null;
+
+function initTouchDrag(el, cat, id) {
+  el.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    touchDragCat = cat; touchDragId = id; touchOriginEl = el;
+    el.classList.add('dragging');
+    // Maak een visuele clone
+    touchClone = el.cloneNode(true);
+    touchClone.style.cssText = `position:fixed;pointer-events:none;opacity:0.85;z-index:999;width:${el.offsetWidth}px;transform:scale(1.03);box-shadow:0 4px 16px rgba(0,0,0,0.18);`;
+    document.body.appendChild(touchClone);
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    if (!touchClone) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    touchClone.style.left = (t.clientX - touchClone.offsetWidth / 2) + 'px';
+    touchClone.style.top  = (t.clientY - 24) + 'px';
+    // Highlight drop target
+    touchClone.style.display = 'none';
+    const under = document.elementFromPoint(t.clientX, t.clientY);
+    touchClone.style.display = '';
+    document.querySelectorAll('.memo-list').forEach(l => l.classList.remove('drop-target'));
+    const list = under?.closest('.memo-list');
+    if (list) list.classList.add('drop-target');
+  }, { passive: false });
+
+  el.addEventListener('touchend', e => {
+    if (!touchClone) return;
+    const t = e.changedTouches[0];
+    touchClone.remove(); touchClone = null;
+    touchOriginEl?.classList.remove('dragging');
+    document.querySelectorAll('.memo-list').forEach(l => l.classList.remove('drop-target'));
+    // Zoek het drop target
+    const under = document.elementFromPoint(t.clientX, t.clientY);
+    const list = under?.closest('.memo-list');
+    if (list) {
+      const targetCat = list.id.replace('list-', '');
+      if (targetCat && CATS.includes(targetCat)) {
+        moveMemo(touchDragCat, touchDragId, targetCat);
+      }
+    }
+    touchDragCat = null; touchDragId = null; touchOriginEl = null;
+  });
+}
+
+// ── Auth ──
+const _idxUrl  = 'https://gobqaidvirtadgpduznd.supabase.co';
+const _idxAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
+var supabase = window.supabase.createClient(_idxUrl, _idxAnon);
+
+async function checkAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { window.location.href = '/auth.html'; return null; }
+  const { data: profiel } = await supabase.from('gebruikers').select('id,naam,rol,goedgekeurd').eq('id', session.user.id).single();
+  if (!profiel?.goedgekeurd) { window.location.href = '/auth.html'; return null; }
+  return { session, profiel };
+}
+
+async function uitloggen() {
+  await supabase.auth.signOut();
+  window.location.href = '/auth.html';
+}
+
+// ── Init ──
+buildCatsGrid();
+initRec();
+
+// Auth check + alles instellen
+(async function initPagina() {
+  const auth = await checkAuth();
+  if (!auth) return;
+
+  window._auteurId = auth.profiel.id;
+  window._gebruikerNaam = auth.profiel.naam;
+
+  const params = new URLSearchParams(window.location.search);
+  const evalIdParam = params.get('eval_id');
+  const locatieParam = params.get('locatie');
+
+  if (evalIdParam) {
+    // Laad bestaande evaluatie uit Supabase
+    await laadEvaluatieUitSupabase(evalIdParam);
+  } else {
+    // Nieuwe evaluatie — datum vandaag + naam invullen
+    document.getElementById('datum').value = new Date().toISOString().split('T')[0];
+    if (!document.getElementById('naamInput').value) {
+      document.getElementById('naamInput').value = auth.profiel.naam || '';
+    }
+    if (locatieParam) {
+      const sel = document.getElementById('locatie');
+      for (const opt of sel.options) {
+        if (opt.value === locatieParam) { sel.value = locatieParam; break; }
+      }
+      if (sel.value !== locatieParam) {
+        const opt = document.createElement('option');
+        opt.value = locatieParam; opt.textContent = locatieParam;
+        sel.appendChild(opt); sel.value = locatieParam;
+      }
+    }
+    updateOnderwerp();
+  }
+})();
+
+async function laadEvaluatieUitSupabase(evalId) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || '';
+
+    const res = await fetch(
+      `/.netlify/functions/evaluaties?eval_id=${evalId}`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    const eval_ = Array.isArray(data) ? data[0] : data;
+    if (!eval_) { console.warn('Evaluatie niet gevonden'); return; }
+
+    // Zet currentEvalId zodat autosave de bestaande rij updatet
+    currentEvalId = eval_.id;
+
+    // Vul formuliervelden in
+    document.getElementById('datum').value = eval_.datum || new Date().toISOString().split('T')[0];
+    document.getElementById('naamInput').value = eval_.manager || window._gebruikerNaam || '';
+    document.getElementById('openTijd').value = eval_.opentijd || '23:00';
+    document.getElementById('sluitTijd').value = eval_.sluittijd || '05:00';
+    document.getElementById('onderwerp').value = eval_.onderwerp || '';
+    // Als onderwerp leeg is, automatisch genereren op basis van locatie + datum
+    if (!eval_.onderwerp) updateOnderwerp();
+
+    // Locatie instellen
+    if (eval_.locatie) {
+      const sel = document.getElementById('locatie');
+      for (const opt of sel.options) {
+        if (opt.value === eval_.locatie) { sel.value = eval_.locatie; break; }
+      }
+      if (sel.value !== eval_.locatie) {
+        const opt = document.createElement('option');
+        opt.value = eval_.locatie; opt.textContent = eval_.locatie;
+        sel.appendChild(opt); sel.value = eval_.locatie;
+      }
+    }
+
+    // Herstel memo's uit de memo kolommen
+    const CAT_KEYS = { verloop:'memo_verloop', algemeen:'memo_algemeen', personeel:'memo_personeel',
+      dj:'memo_dj', lichten:'memo_lichten', veiligheid:'memo_veiligheid', td:'memo_td', overig:'memo_overig' };
+
+    for (const [cat, key] of Object.entries(CAT_KEYS)) {
+      const raw = eval_[key];
+      if (!raw) continue;
+      // Format: "[HH:MM] tekst | [HH:MM] tekst"
+      const items = raw.split(' | ').filter(Boolean);
+      for (const item of items) {
+        const match = item.match(/^\[(\d{2}:\d{2})\] (.+)$/);
+        if (match) {
+          const id = ++memoId;
+          memos[cat].push({ id, tekst: match[2], tijd: match[1] });
+        } else if (item.trim()) {
+          const id = ++memoId;
+          memos[cat].push({ id, tekst: item.trim(), tijd: timeNow() });
+        }
+      }
+      renderCat(cat);
+    }
+
+    updateGenBtn();
+
+    // Toon evaluatietekst als die er al is
+    if (eval_.evaluatie_tekst) {
+      document.getElementById('outputTxt').textContent = eval_.evaluatie_tekst;
+      document.getElementById('outputCard').style.display = 'block';
+      document.getElementById('savedBadge').style.display = 'inline-flex';
+    }
+
+    console.log('[laden] evaluatie hersteld:', currentEvalId);
+  } catch(e) {
+    console.error('[laden] fout:', e.message);
+  }
+}
+</script>
+</body>
+</html>
