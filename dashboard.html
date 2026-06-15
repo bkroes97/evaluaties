@@ -281,7 +281,12 @@ let gefilterd = [];
 // ── Data laden via Netlify function ──
 async function laadEvaluaties() {
   try {
-    const res = await fetch('/.netlify/functions/evaluaties');
+    // Stuur auth token mee zodat RLS werkt
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || '';
+    const res = await fetch('/.netlify/functions/evaluaties', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     alleEvaluaties = data || [];
