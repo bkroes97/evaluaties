@@ -847,11 +847,13 @@ ${memoTekst}`;
 
   try {
     const meta = { manager: naam, datum, locatie, opentijd: open, sluittijd: sluit, onderwerp, auteur_id: window._auteurId || null, eval_id: currentEvalId || null, ...memoMeta };
+    console.log('[genereer] currentEvalId:', currentEvalId, '| eval_id in meta:', meta.eval_id);
     const json = await callClaude(
       { model: 'claude-sonnet-4-5', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] },
       meta,
       true
     );
+    console.log('[genereer] response evalId:', json.evalId, '| supabaseError:', json.supabaseError);
 
     const output = json.content?.map(b => b.text || '').join('');
     if (!output) throw new Error('Geen tekst ontvangen van de API.');
