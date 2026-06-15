@@ -100,7 +100,7 @@
       <div class="welkom" id="welkomTekst"></div>
     </div>
     <div class="header-right">
-      <a href="/dashboard.html" class="btn"><i class="ti ti-layout-dashboard"></i> Overzicht</a>
+      <span id="beheerBtn" style="display:none;"><a href="/admin.html" class="btn"><i class="ti ti-settings"></i> Beheer</a></span>
       <button class="btn" onclick="uitloggen()"><i class="ti ti-logout"></i></button>
     </div>
   </div>
@@ -181,6 +181,9 @@ async function init() {
   document.getElementById('welkomTekst').textContent = profiel.naam;
 
   if (profiel.rol === 'kijker') { window.location.href = '/dashboard.html'; return; }
+  if (profiel.rol === 'admin' || profiel.rol === 'rayonmanager') {
+    document.getElementById('beheerBtn').style.display = '';
+  }
 
   let locaties = [];
   if (profiel.rol === 'admin' || profiel.rol === 'rayonmanager') {
