@@ -1158,18 +1158,33 @@ async function handleUrenUpload(file) {
             role: 'user',
             content: [
               { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-              { type: 'text', text: `Lees de urenlijst uit deze afbeelding nauwkeurig uit. Dit is een nachtclub urenlijst met namen van medewerkers en hun werktijden.
+              { type: 'text', text: `Je bent een expert in het lezen van handgeschreven Nederlandse urenlijsten van horecagelegenheden.
 
-Geef ALLEEN een JSON array terug, geen uitleg, geen markdown:
+Deze foto toont een handgeschreven urenregistratie van een nachtclub/horecazaak. Lees alle gegevens zo nauwkeurig mogelijk uit.
+
+CONTEXT:
+- Nederlandse namen (Jan, Emma, Sebastiaan, Mohammed, etc.)
+- Werktijden zijn avond/nacht: begin meestal tussen 16:00-23:00, eind tussen 00:00-06:00
+- Pauze staat soms als "30", "0.5u", "½u" of met een streepje — converteer altijd naar minuten
+- Functies kunnen zijn: bar, bediening, deur, portier, kassa, schoonmaak, DJ, lichten, TD
+- Tijden kunnen staan als: 22:00, 22.00, 22u, 10pm — converteer altijd naar HH:MM (24-uurs)
+- Bij onduidelijk handschrift: probeer meerdere interpretaties en kies de meest logische
+
+AANPAK VOOR MOEILIJK HANDSCHRIFT:
+1. Analyseer de structuur van het formulier (rijen, kolommen)
+2. Lees letter voor letter bij onduidelijke namen
+3. Gebruik context (andere namen op de lijst) om handschrift te kalibreren
+4. Bij twijfel tussen twee letters, kies de meest voorkomende Nederlandse naam
+
+Geef ALLEEN een JSON array terug, geen uitleg, geen markdown, begin direct met [:
 [{"naam":"Jan de Vries","functie":"bar","begin":"22:00","eind":"03:00","pauze":"30"}]
 
-Regels:
-- Lees alle namen voor, ook moeilijk leesbaar handschrift
-- Tijden altijd in HH:MM formaat (bijv. 22:00, 03:30)
-- Pauze in minuten als getal (bijv. 30)
-- Functie optioneel (bar, deur, etc.)
-- Als iets niet leesbaar is: gebruik null
-- Begin direct met [ zonder uitleg` }
+Velden:
+- naam: volledige naam zoals geschreven
+- functie: werkplek/rol (of null)
+- begin: begintijd HH:MM
+- eind: eindtijd HH:MM  
+- pauze: pauze in minuten als getal (0 als geen pauze, null als onleesbaar)` }
             ]
           }]
         },
@@ -1289,49 +1304,69 @@ function fileToBase64(file) {
 }
 
 function downloadUrenExcel() {
-  if (!urenlijstData?.gegevens?.length) return;
-  const datum   = document.getElementById('datum').value || '';
-  const locatie = document.getElementById('locatie').value || '';
-  const datumNl = datum ? new Date(datum).toLocaleDateString('nl-NL', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
+  try {
+    if (!urenlijstData || !urenlijstData.gegevens || urenlijstData.gegevens.length === 0) {
+      showToast('Geen urengegevens om te downloaden');
+      return;
+    }
+    if (typeof XLSX === 'undefined') {
+      showToast('Excel bibliotheek laadt nog — probeer opnieuw');
+      return;
+    }
 
-  const wb = XLSX.utils.book_new();
+    const datum   = document.getElementById('datum').value || '';
+    const locatie = document.getElementById('locatie').value || '';
+    const datumNl = datum ? new Date(datum).toLocaleDateString('nl-NL', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
 
-  // Kopregel met locatie en datum
-  const wsData = [
-    [`Urenlijst — ${locatie}`, '', '', '', ''],
-    [datumNl, '', '', '', ''],
-    [],
-    ['Naam', 'Functie', 'Begintijd', 'Eindtijd', 'Pauze (min)'],
-  ];
+    const wb = XLSX.utils.book_new();
 
-  urenlijstData.gegevens.forEach(r => {
-    wsData.push([
-      r.naam     || '',
-      r.functie  || '',
-      r.begin    || '',
-      r.eind     || '',
-      r.pauze !== null && r.pauze !== undefined ? String(r.pauze) : ''
-    ]);
-  });
+    const wsData = [
+      ['Urenlijst — ' + locatie, '', '', '', ''],
+      [datumNl, '', '', '', ''],
+      ['', '', '', '', ''],
+      ['Naam', 'Functie', 'Begintijd', 'Eindtijd', 'Pauze (min)'],
+    ];
 
-  // Totaalrij
-  const dataStart = 5;
-  const dataEind  = dataStart + urenlijstData.gegevens.length - 1;
-  wsData.push(['Totaal', '', '', '', `=SUM(E${dataStart}:E${dataEind})`]);
+    urenlijstData.gegevens.forEach(function(r) {
+      wsData.push([
+        r.naam     || '',
+        r.functie  || '',
+        r.begin    || '',
+        r.eind     || '',
+        r.pauze !== null && r.pauze !== undefined ? Number(r.pauze) || 0 : 0
+      ]);
+    });
 
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const dataStart = 5;
+    const dataEind  = dataStart + urenlijstData.gegevens.length - 1;
+    wsData.push(['Totaal', '', '', '', '=SUM(E' + dataStart + ':E' + dataEind + ')']);
 
-  // Opmaak: kopregel vet en groter
-  if (!ws['!merges']) ws['!merges'] = [];
-  ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }); // Merge rij 1
-  ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }); // Merge rij 2
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    if (!ws['!merges']) ws['!merges'] = [];
+    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } });
+    ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 4 } });
+    ws['!cols'] = [{ wch: 25 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 14 }];
 
-  // Kolombreedte
-  ws['!cols'] = [{ wch: 25 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Urenlijst');
 
-  XLSX.utils.book_append_sheet(wb, ws, 'Urenlijst');
-  const bestandsnaam = [locatie, datum].filter(Boolean).join('-').replace(/\s+/g, '_');
-  XLSX.writeFile(wb, `urenlijst-${bestandsnaam}.xlsx`);
+    const bestandsnaam = 'urenlijst-' + [locatie, datum].filter(Boolean).join('-').replace(/[^a-zA-Z0-9-]/g, '_') + '.xlsx';
+
+    // Gebruik write + blob voor betere mobiele ondersteuning
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = bestandsnaam;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+
+    showToast('Excel gedownload!');
+  } catch(e) {
+    console.error('[excel] fout:', e);
+    showToast('Download mislukt: ' + e.message);
+  }
 }
 
 function bewerkUren() {
