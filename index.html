@@ -1081,6 +1081,210 @@ function initTouchDrag(el, cat, id) {
   });
 }
 
+// ── Bijlagen & Urenlijst ──
+let urenlijstData   = null;  // { file, url, gegevens: [{naam, begin, eind, pauze}] }
+let bijlagen        = [];    // [{ file, url, naam }]
+
+function onDragOverUpload(e, zoneId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.add('dragover');
+}
+function onDragLeaveUpload(zoneId) {
+  document.getElementById(zoneId).classList.remove('dragover');
+}
+function onDropUpload(e, type) {
+  e.preventDefault();
+  const zoneId = type === 'uren' ? 'urenUploadZone' : 'bijlagenUploadZone';
+  document.getElementById(zoneId).classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (!files.length) return;
+  if (type === 'uren') handleUrenUpload(files[0]);
+  else handleBijlagenUpload(files);
+}
+
+async function handleUrenUpload(file) {
+  if (!file) return;
+  const preview = document.getElementById('urenPreview');
+  preview.innerHTML = `<div class="bijlage-item"><i class="ti ti-loader bijlage-icon"></i><span class="bijlage-naam">${escHtml(file.name)}</span><span class="bijlage-status">AI leest gegevens uit...</span></div>`;
+
+  try {
+    // Convert file to base64
+    const base64 = await fileToBase64(file);
+    const mediaType = file.type || 'image/jpeg';
+
+    // Call Claude to extract data
+    const res = await fetch('/.netlify/functions/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        payload: {
+          model: 'claude-sonnet-4-5',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+              { type: 'text', text: 'Lees de urenlijst uit deze afbeelding. Geef ALLEEN een JSON array terug met de medewerkers, geen uitleg:\n[{"naam":"Jan de Vries","begin":"22:00","eind":"03:00","pauze":"30"}]\nAls een veld niet leesbaar is, gebruik dan null.' }
+            ]
+          }]
+        },
+        saveToSupabase: false
+      })
+    });
+
+    const data = await res.json();
+    const raw = data.content?.[0]?.text?.trim() || '';
+    const match = raw.replace(/```json|```/g, '').match(/\[[\s\S]*\]/);
+    const gegevens = match ? JSON.parse(match[0]) : [];
+
+    urenlijstData = { file, gegevens };
+
+    // Upload naar Supabase Storage
+    const url = await uploadNaarStorage(file, 'urenlijst');
+    if (url) urenlijstData.url = url;
+
+    renderUrenPreview(gegevens, file.name);
+  } catch(e) {
+    console.error('[uren] fout:', e);
+    urenlijstData = { file };
+    preview.innerHTML = `<div class="bijlage-item"><i class="ti ti-photo bijlage-icon"></i><span class="bijlage-naam">${escHtml(file.name)}</span><span class="bijlage-status error">Kon gegevens niet uitlezen — bestand wel opgeslagen</span><span class="bijlage-del" onclick="verwijderUren()"><i class="ti ti-x"></i></span></div>`;
+  }
+}
+
+function renderUrenPreview(gegevens, bestandsnaam) {
+  const preview = document.getElementById('urenPreview');
+  let html = `<div class="bijlage-item" style="margin-bottom:6px;">
+    <i class="ti ti-photo bijlage-icon"></i>
+    <span class="bijlage-naam">${escHtml(bestandsnaam)}</span>
+    <span class="bijlage-status ok"><i class="ti ti-check"></i> ${gegevens.length} medewerkers uitgelezen</span>
+    <span class="bijlage-del" onclick="verwijderUren()"><i class="ti ti-x"></i></span>
+  </div>`;
+
+  if (gegevens.length > 0) {
+    html += `<div class="urenlijst-preview">
+      <table>
+        <thead><tr><th>Naam</th><th>Begin</th><th>Eind</th><th>Pauze (min)</th></tr></thead>
+        <tbody>${gegevens.map(r => `<tr>
+          <td>${escHtml(r.naam || '—')}</td>
+          <td>${escHtml(r.begin || '—')}</td>
+          <td>${escHtml(r.eind || '—')}</td>
+          <td>${escHtml(String(r.pauze || '—'))}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:6px;">
+      <button class="btn" onclick="downloadUrenExcel()" style="font-size:12px;padding:5px 10px;"><i class="ti ti-table-export"></i> Download Excel</button>
+      <button class="btn btn-sm" onclick="bewerkUren()" style="font-size:12px;padding:5px 10px;"><i class="ti ti-pencil"></i> Bewerken</button>
+    </div>`;
+  }
+  preview.innerHTML = html;
+}
+
+function verwijderUren() {
+  urenlijstData = null;
+  document.getElementById('urenPreview').innerHTML = '';
+  document.getElementById('urenInput').value = '';
+}
+
+async function handleBijlagenUpload(files) {
+  for (const file of files) {
+    const url = await uploadNaarStorage(file, 'bijlage');
+    bijlagen.push({ file, url, naam: file.name });
+    renderBijlagen();
+  }
+  document.getElementById('bijlagenInput').value = '';
+}
+
+function renderBijlagen() {
+  const lijst = document.getElementById('bijlagenLijst');
+  lijst.innerHTML = bijlagen.map((b, i) => `
+    <div class="bijlage-item">
+      <i class="ti ${getFileIcon(b.naam)} bijlage-icon"></i>
+      <span class="bijlage-naam">${escHtml(b.naam)}</span>
+      <span class="bijlage-status ok"><i class="ti ti-check"></i> Opgeslagen</span>
+      <span class="bijlage-del" onclick="verwijderBijlage(${i})"><i class="ti ti-x"></i></span>
+    </div>`).join('');
+}
+
+function verwijderBijlage(i) {
+  bijlagen.splice(i, 1);
+  renderBijlagen();
+}
+
+function getFileIcon(naam) {
+  const ext = naam.split('.').pop().toLowerCase();
+  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return 'ti-photo';
+  if (ext === 'pdf') return 'ti-file-type-pdf';
+  if (['doc','docx'].includes(ext)) return 'ti-file-type-doc';
+  return 'ti-file';
+}
+
+async function uploadNaarStorage(file, map) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return null;
+    const bestandsnaam = `${map}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const { data, error } = await supabase.storage.from('bijlagen').upload(bestandsnaam, file, { upsert: true });
+    if (error) throw error;
+    const { data: urlData } = supabase.storage.from('bijlagen').getPublicUrl(bestandsnaam);
+    return urlData.publicUrl;
+  } catch(e) {
+    console.warn('[storage] upload fout:', e.message);
+    return null;
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function downloadUrenExcel() {
+  if (!urenlijstData?.gegevens?.length) return;
+  const datum  = document.getElementById('datum').value || 'datum';
+  const locatie = document.getElementById('locatie').value || 'locatie';
+
+  const wb = XLSX.utils.book_new();
+  const headers = ['Naam', 'Begintijd', 'Eindtijd', 'Pauze (min)', 'Gewerkte uren'];
+  const rows = urenlijstData.gegevens.map(r => {
+    const begin = r.begin || '';
+    const eind  = r.eind  || '';
+    const pauze = parseInt(r.pauze) || 0;
+    // Bereken gewerkte uren als formule
+    return [r.naam || '', begin, eind, pauze, ''];
+  });
+
+  const wsData = [headers, ...rows];
+  // Voeg totaalrij toe
+  wsData.push(['Totaal', '', '', `=SUM(D2:D${rows.length + 1})`, '']);
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Kolombreedte
+  ws['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 16 }];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Urenlijst');
+  XLSX.writeFile(wb, `urenlijst-${locatie}-${datum}.xlsx`);
+}
+
+function bewerkUren() {
+  if (!urenlijstData?.gegevens) return;
+  // Simpele edit: toon een textarea met JSON
+  const tekst = JSON.stringify(urenlijstData.gegevens, null, 2);
+  const nieuw = prompt('Bewerk de urengegevens (JSON):', tekst);
+  if (!nieuw) return;
+  try {
+    urenlijstData.gegevens = JSON.parse(nieuw);
+    renderUrenPreview(urenlijstData.gegevens, urenlijstData.file?.name || 'urenlijst');
+  } catch(e) {
+    alert('Ongeldige JSON');
+  }
+}
+
 // ── Auth ──
 const _idxUrl  = 'https://gobqaidvirtadgpduznd.supabase.co';
 const _idxAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
