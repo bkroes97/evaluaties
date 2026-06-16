@@ -1158,37 +1158,42 @@ async function handleUrenUpload(file) {
             role: 'user',
             content: [
               { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-              { type: 'text', text: `Je bent een expert in het lezen van handgeschreven Nederlandse urenregistraties van horecagelegenheden.
+              { type: 'text', text: `Je bent een expert in het lezen van handgeschreven Nederlandse urenregistraties van horecagelegenheden (cafés, nachtclubs, restaurants).
 
-Dit is een "DAGSTAAT" formulier van een horecazaak (café/nachtclub). Het formulier heeft deze kolommen:
-- Voor- en achternaam
-- Start (begintijd)
-- Eind (eindtijd)  
-- Break (pauze in minuten)
-- Validated (vinkje, negeer dit)
-- Indirect/Neuken (negeer dit)
-- Paraaf WG (negeer dit)
+Er zijn twee veelvoorkomende formuliertypen:
 
-LEESREGELS VOOR DIT SPECIFIEKE FORMULIER:
-1. Namen staan in de eerste kolom — lees voor- EN achternaam
-2. Start en Eind zijn tijden in 24-uurs notatie, geschreven als "22°°" of "2200" of "22:00" — altijd omzetten naar HH:MM
-3. Het cijfer "°°" of "oo" na een uur betekent ":00" (bijv. "22°°" = 22:00)
-4. Break staat als getal in minuten (15, 30, 60) of als streepje/leeg (= 0 minuten)
-5. Werktijden: start meestal 16:00-23:00, eind 00:00-06:00 (volgende dag)
+FORMULIERTYPE 1 — "DAGSTAAT":
+- Kolommen: Voor- en achternaam | Start | Eind | Break | Validated | Indirect | Paraaf WG
+- Break = pauze in minuten
+- Start/Eind geschreven als "22°°", "2200", "22:00" — altijd omzetten naar HH:MM
+
+FORMULIERTYPE 2 — INTERN/EXTERN formulier (zaaknaam bovenaan, bijv. "ROLLUIK"):
+- Twee secties: EXTERN (externe medewerkers) en INTERN (eigen personeel)
+- Kolommen: Voor- en achternaam | Begintijd | Eindtijd | Pauze | Paraaf WN | Paraaf WG
+- Lees BEIDE secties uit (extern én intern)
+- Onderaan staat soms een SCHOONMAAK sectie — negeer die
+
+ALGEMENE LEESREGELS:
+1. Lees voor- én achternaam volledig
+2. Tijden altijd in HH:MM (24-uurs) — "22°°" of "2200" = 22:00
+3. "°°" of "oo" na een uur = ":00"  
+4. Werktijden: begin 16:00-23:00, eind 00:00-06:00
+5. Pauze als getal in minuten — streepje of leeg = 0
+6. Lege rijen overslaan
 
 HANDSCHRIFT TIPS:
-- "Kr" aan het begin van een naam = waarschijnlijk "Kroes" of "Kroon"
-- "St" = "Strookman", "Straten", "Stevens" etc.
-- Getallen die op "6" lijken bij eindtijden zijn vaak "0" (bijv. "06:00" vs "00:00") — kijk naar context
+- Getallen die op "6" lijken bij eindtijden zijn vaak "0" (03:00 niet 06:00)
 - Lees elke letter afzonderlijk bij onduidelijke namen
-- Nederlandse achternamen: de Vries, Jansen, Peters, Bakker, Strookman, Puscas etc.
+- Nederlandse namen: Kroes, Strookman, Puscas, de Vries, Jansen, Peters, Bakker
+- "B" en "D" lijken op elkaar in handschrift — gebruik context van de naam
+- Bij functie: extern = "extern", intern = null of functienaam
 
 Geef ALLEEN een JSON array terug, geen uitleg, geen markdown, begin direct met [:
-[{"naam":"Boy Kroes","functie":null,"begin":"22:00","eind":"03:00","pauze":15}]
+[{"naam":"Boy Kroes","functie":null,"begin":"22:00","eind":"03:00","pauze":15},{"naam":"Diana Puscas","functie":"extern","begin":"23:45","eind":"02:45","pauze":60}]
 
 Velden:
 - naam: volledige naam
-- functie: null (staat niet op dit formulier)
+- functie: "extern" als uit EXTERN sectie, anders null of functienaam
 - begin: begintijd HH:MM
 - eind: eindtijd HH:MM
 - pauze: pauze in minuten als getal, 0 als geen pauze` }
