@@ -199,20 +199,22 @@
 
     <div class="bijlagen-sectie">
       <div class="bijlagen-sectie-label"><i class="ti ti-clock" aria-hidden="true"></i> Urenlijst</div>
-      <div class="upload-zone" id="urenUploadZone" ondragover="onDragOverUpload(event,'urenUploadZone')" ondragleave="onDragLeaveUpload('urenUploadZone')" ondrop="onDropUpload(event,'uren')">
+      <div class="upload-zone" id="urenUploadZone" onclick="document.getElementById('urenInput').click()" ondragover="onDragOverUpload(event,'urenUploadZone')" ondragleave="onDragLeaveUpload('urenUploadZone')" ondrop="onDropUpload(event,'uren')">
         <input type="file" id="urenInput" accept="image/*,.pdf" onchange="handleUrenUpload(this.files[0])" />
-        <i class="ti ti-camera upload-zone-icon" aria-hidden="true"></i>
-        <div class="upload-zone-txt"><strong>Foto of scan uploaden</strong><br>Sleep een bestand hierheen of klik om te kiezen</div>
+        <div class="upload-zone-icon-wrap"><i class="ti ti-camera" aria-hidden="true"></i></div>
+        <div class="upload-zone-txt"><strong>Urenlijst uploaden</strong><span>Foto of scan — klik of sleep hierheen</span></div>
+        <i class="ti ti-chevron-right upload-zone-arrow" aria-hidden="true"></i>
       </div>
       <div id="urenPreview"></div>
     </div>
 
     <div class="bijlagen-sectie">
       <div class="bijlagen-sectie-label"><i class="ti ti-paperclip" aria-hidden="true"></i> Losse bijlagen</div>
-      <div class="upload-zone" id="bijlagenUploadZone" ondragover="onDragOverUpload(event,'bijlagenUploadZone')" ondragleave="onDragLeaveUpload('bijlagenUploadZone')" ondrop="onDropUpload(event,'bijlage')">
+      <div class="upload-zone" id="bijlagenUploadZone" onclick="document.getElementById('bijlagenInput').click()" ondragover="onDragOverUpload(event,'bijlagenUploadZone')" ondragleave="onDragLeaveUpload('bijlagenUploadZone')" ondrop="onDropUpload(event,'bijlage')">
         <input type="file" id="bijlagenInput" accept="image/*,.pdf,.doc,.docx,.txt" multiple onchange="handleBijlagenUpload(this.files)" />
-        <i class="ti ti-upload upload-zone-icon" aria-hidden="true"></i>
-        <div class="upload-zone-txt"><strong>Bestanden toevoegen</strong><br>Foto, PDF of document — meerdere tegelijk mogelijk</div>
+        <div class="upload-zone-icon-wrap"><i class="ti ti-paperclip" aria-hidden="true"></i></div>
+        <div class="upload-zone-txt"><strong>Bijlagen toevoegen</strong><span>Foto, PDF of document — meerdere tegelijk</span></div>
+        <i class="ti ti-chevron-right upload-zone-arrow" aria-hidden="true"></i>
       </div>
       <div class="bijlage-lijst" id="bijlagenLijst"></div>
     </div>
