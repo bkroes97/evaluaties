@@ -1158,33 +1158,40 @@ async function handleUrenUpload(file) {
             role: 'user',
             content: [
               { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-              { type: 'text', text: `Je bent een expert in het lezen van handgeschreven Nederlandse urenlijsten van horecagelegenheden.
+              { type: 'text', text: `Je bent een expert in het lezen van handgeschreven Nederlandse urenregistraties van horecagelegenheden.
 
-Deze foto toont een handgeschreven urenregistratie van een nachtclub/horecazaak. Lees alle gegevens zo nauwkeurig mogelijk uit.
+Dit is een "DAGSTAAT" formulier van een horecazaak (café/nachtclub). Het formulier heeft deze kolommen:
+- Voor- en achternaam
+- Start (begintijd)
+- Eind (eindtijd)  
+- Break (pauze in minuten)
+- Validated (vinkje, negeer dit)
+- Indirect/Neuken (negeer dit)
+- Paraaf WG (negeer dit)
 
-CONTEXT:
-- Nederlandse namen (Jan, Emma, Sebastiaan, Mohammed, etc.)
-- Werktijden zijn avond/nacht: begin meestal tussen 16:00-23:00, eind tussen 00:00-06:00
-- Pauze staat soms als "30", "0.5u", "½u" of met een streepje — converteer altijd naar minuten
-- Functies kunnen zijn: bar, bediening, deur, portier, kassa, schoonmaak, DJ, lichten, TD
-- Tijden kunnen staan als: 22:00, 22.00, 22u, 10pm — converteer altijd naar HH:MM (24-uurs)
-- Bij onduidelijk handschrift: probeer meerdere interpretaties en kies de meest logische
+LEESREGELS VOOR DIT SPECIFIEKE FORMULIER:
+1. Namen staan in de eerste kolom — lees voor- EN achternaam
+2. Start en Eind zijn tijden in 24-uurs notatie, geschreven als "22°°" of "2200" of "22:00" — altijd omzetten naar HH:MM
+3. Het cijfer "°°" of "oo" na een uur betekent ":00" (bijv. "22°°" = 22:00)
+4. Break staat als getal in minuten (15, 30, 60) of als streepje/leeg (= 0 minuten)
+5. Werktijden: start meestal 16:00-23:00, eind 00:00-06:00 (volgende dag)
 
-AANPAK VOOR MOEILIJK HANDSCHRIFT:
-1. Analyseer de structuur van het formulier (rijen, kolommen)
-2. Lees letter voor letter bij onduidelijke namen
-3. Gebruik context (andere namen op de lijst) om handschrift te kalibreren
-4. Bij twijfel tussen twee letters, kies de meest voorkomende Nederlandse naam
+HANDSCHRIFT TIPS:
+- "Kr" aan het begin van een naam = waarschijnlijk "Kroes" of "Kroon"
+- "St" = "Strookman", "Straten", "Stevens" etc.
+- Getallen die op "6" lijken bij eindtijden zijn vaak "0" (bijv. "06:00" vs "00:00") — kijk naar context
+- Lees elke letter afzonderlijk bij onduidelijke namen
+- Nederlandse achternamen: de Vries, Jansen, Peters, Bakker, Strookman, Puscas etc.
 
 Geef ALLEEN een JSON array terug, geen uitleg, geen markdown, begin direct met [:
-[{"naam":"Jan de Vries","functie":"bar","begin":"22:00","eind":"03:00","pauze":"30"}]
+[{"naam":"Boy Kroes","functie":null,"begin":"22:00","eind":"03:00","pauze":15}]
 
 Velden:
-- naam: volledige naam zoals geschreven
-- functie: werkplek/rol (of null)
+- naam: volledige naam
+- functie: null (staat niet op dit formulier)
 - begin: begintijd HH:MM
-- eind: eindtijd HH:MM  
-- pauze: pauze in minuten als getal (0 als geen pauze, null als onleesbaar)` }
+- eind: eindtijd HH:MM
+- pauze: pauze in minuten als getal, 0 als geen pauze` }
             ]
           }]
         },
@@ -1328,18 +1335,26 @@ function downloadUrenExcel() {
     ];
 
     urenlijstData.gegevens.forEach(function(r) {
+      // Parse pauze: "30", "30 min", "1 uur", "1u", "0.5u", "½u" -> minuten
+      var pauzeStr = String(r.pauze || '0');
+      var pauzeMin = 0;
+      if (pauzeStr.match(/uur|u$/i)) {
+        pauzeMin = Math.round(parseFloat(pauzeStr) * 60);
+      } else {
+        pauzeMin = parseInt(pauzeStr) || 0;
+      }
       wsData.push([
         r.naam     || '',
         r.functie  || '',
         r.begin    || '',
         r.eind     || '',
-        r.pauze !== null && r.pauze !== undefined ? Number(r.pauze) || 0 : 0
+        pauzeMin
       ]);
     });
 
     const dataStart = 5;
     const dataEind  = dataStart + urenlijstData.gegevens.length - 1;
-    wsData.push(['Totaal', '', '', '', '=SUM(E' + dataStart + ':E' + dataEind + ')']);
+    wsData.push(['', '', '', 'Totaal pauze:', '=SUM(E' + dataStart + ':E' + dataEind + ')']);
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     if (!ws['!merges']) ws['!merges'] = [];
