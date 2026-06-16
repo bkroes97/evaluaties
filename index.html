@@ -193,6 +193,29 @@
   <!-- Categorieën -->
   <div class="cats" id="catsGrid"></div>
 
+  <!-- Bijlagen sectie -->
+  <div class="bijlagen-card">
+    <div class="bijlagen-title"><i class="ti ti-paperclip"></i> Bijlagen</div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500;"><i class="ti ti-clock"></i> Urenlijst (foto/scan)</div>
+      <div class="upload-zone" id="urenUploadZone" ondragover="onDragOverUpload(event,'urenUploadZone')" ondragleave="onDragLeaveUpload('urenUploadZone')" ondrop="onDropUpload(event,'uren')">
+        <input type="file" id="urenInput" accept="image/*,.pdf" onchange="handleUrenUpload(this.files[0])" />
+        <div class="upload-zone-txt"><i class="ti ti-camera"></i>Foto of scan van urenlijst uploaden</div>
+      </div>
+      <div id="urenPreview"></div>
+    </div>
+
+    <div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500;"><i class="ti ti-file-plus"></i> Losse bijlagen</div>
+      <div class="upload-zone" id="bijlagenUploadZone" ondragover="onDragOverUpload(event,'bijlagenUploadZone')" ondragleave="onDragLeaveUpload('bijlagenUploadZone')" ondrop="onDropUpload(event,'bijlage')">
+        <input type="file" id="bijlagenInput" accept="image/*,.pdf,.doc,.docx,.txt" multiple onchange="handleBijlagenUpload(this.files)" />
+        <div class="upload-zone-txt"><i class="ti ti-upload"></i>Bestanden uploaden (foto, PDF, document)</div>
+      </div>
+      <div class="bijlage-lijst" id="bijlagenLijst"></div>
+    </div>
+  </div>
+
   <button class="gen-btn" id="genBtn" onclick="generateEval()" disabled>
     <i class="ti ti-sparkles" id="genIcon"></i>
     <span id="genTxt">Genereer evaluatie</span>
