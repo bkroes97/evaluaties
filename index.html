@@ -200,10 +200,13 @@
     <div class="bijlagen-sectie">
       <div class="bijlagen-sectie-label"><i class="ti ti-clock" aria-hidden="true"></i> Urenlijst</div>
       <input type="file" id="urenInput" accept="image/*,.pdf" onchange="handleUrenUpload(this.files[0])" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />
-      <div class="upload-zone" id="urenUploadZone" onclick="document.getElementById('urenInput').click()" ondragover="onDragOverUpload(event,'urenUploadZone')" ondragleave="onDragLeaveUpload('urenUploadZone')" ondrop="onDropUpload(event,'uren')">
-        <div class="upload-zone-icon-wrap"><i class="ti ti-camera" aria-hidden="true"></i></div>
-        <div class="upload-zone-txt"><strong>Urenlijst uploaden</strong><span>Foto of scan — klik of sleep hierheen</span></div>
-        <i class="ti ti-chevron-right upload-zone-arrow" aria-hidden="true"></i>
+      <div id="urenUploadZone" onclick="document.getElementById('urenInput').click()" ondragover="onDragOverUpload(event,'urenUploadZone')" ondragleave="onDragLeaveUpload('urenUploadZone')" ondrop="onDropUpload(event,'uren')" style="display:flex;align-items:center;gap:14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;cursor:pointer;transition:all 0.15s;">
+        <div style="width:42px;height:42px;border-radius:var(--radius);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text2);flex-shrink:0;"><i class="ti ti-camera"></i></div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;">Urenlijst uploaden</div>
+          <div style="font-size:12px;color:var(--text3);">Foto of scan — klik of sleep hierheen</div>
+        </div>
+        <i class="ti ti-chevron-right" style="color:var(--text3);font-size:16px;"></i>
       </div>
       <div id="urenPreview"></div>
     </div>
@@ -211,10 +214,13 @@
     <div class="bijlagen-sectie">
       <div class="bijlagen-sectie-label"><i class="ti ti-paperclip" aria-hidden="true"></i> Losse bijlagen</div>
       <input type="file" id="bijlagenInput" accept="image/*,.pdf,.doc,.docx,.txt" multiple onchange="handleBijlagenUpload(this.files)" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />
-      <div class="upload-zone" id="bijlagenUploadZone" onclick="document.getElementById('bijlagenInput').click()" ondragover="onDragOverUpload(event,'bijlagenUploadZone')" ondragleave="onDragLeaveUpload('bijlagenUploadZone')" ondrop="onDropUpload(event,'bijlage')">
-        <div class="upload-zone-icon-wrap"><i class="ti ti-paperclip" aria-hidden="true"></i></div>
-        <div class="upload-zone-txt"><strong>Bijlagen toevoegen</strong><span>Foto, PDF of document — meerdere tegelijk</span></div>
-        <i class="ti ti-chevron-right upload-zone-arrow" aria-hidden="true"></i>
+      <div id="bijlagenUploadZone" onclick="document.getElementById('bijlagenInput').click()" ondragover="onDragOverUpload(event,'bijlagenUploadZone')" ondragleave="onDragLeaveUpload('bijlagenUploadZone')" ondrop="onDropUpload(event,'bijlage')" style="display:flex;align-items:center;gap:14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;cursor:pointer;transition:all 0.15s;">
+        <div style="width:42px;height:42px;border-radius:var(--radius);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text2);flex-shrink:0;"><i class="ti ti-paperclip"></i></div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;">Bijlagen toevoegen</div>
+          <div style="font-size:12px;color:var(--text3);">Foto, PDF of document — meerdere tegelijk</div>
+        </div>
+        <i class="ti ti-chevron-right" style="color:var(--text3);font-size:16px;"></i>
       </div>
       <div class="bijlage-lijst" id="bijlagenLijst"></div>
     </div>
