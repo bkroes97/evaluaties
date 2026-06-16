@@ -199,8 +199,8 @@
 
     <div class="bijlagen-sectie">
       <div class="bijlagen-sectie-label"><i class="ti ti-clock" aria-hidden="true"></i> Urenlijst</div>
+      <input type="file" id="urenInput" accept="image/*,.pdf" onchange="handleUrenUpload(this.files[0])" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />
       <div class="upload-zone" id="urenUploadZone" onclick="document.getElementById('urenInput').click()" ondragover="onDragOverUpload(event,'urenUploadZone')" ondragleave="onDragLeaveUpload('urenUploadZone')" ondrop="onDropUpload(event,'uren')">
-        <input type="file" id="urenInput" accept="image/*,.pdf" onchange="handleUrenUpload(this.files[0])" />
         <div class="upload-zone-icon-wrap"><i class="ti ti-camera" aria-hidden="true"></i></div>
         <div class="upload-zone-txt"><strong>Urenlijst uploaden</strong><span>Foto of scan — klik of sleep hierheen</span></div>
         <i class="ti ti-chevron-right upload-zone-arrow" aria-hidden="true"></i>
@@ -210,8 +210,8 @@
 
     <div class="bijlagen-sectie">
       <div class="bijlagen-sectie-label"><i class="ti ti-paperclip" aria-hidden="true"></i> Losse bijlagen</div>
+      <input type="file" id="bijlagenInput" accept="image/*,.pdf,.doc,.docx,.txt" multiple onchange="handleBijlagenUpload(this.files)" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />
       <div class="upload-zone" id="bijlagenUploadZone" onclick="document.getElementById('bijlagenInput').click()" ondragover="onDragOverUpload(event,'bijlagenUploadZone')" ondragleave="onDragLeaveUpload('bijlagenUploadZone')" ondrop="onDropUpload(event,'bijlage')">
-        <input type="file" id="bijlagenInput" accept="image/*,.pdf,.doc,.docx,.txt" multiple onchange="handleBijlagenUpload(this.files)" />
         <div class="upload-zone-icon-wrap"><i class="ti ti-paperclip" aria-hidden="true"></i></div>
         <div class="upload-zone-txt"><strong>Bijlagen toevoegen</strong><span>Foto, PDF of document — meerdere tegelijk</span></div>
         <i class="ti ti-chevron-right upload-zone-arrow" aria-hidden="true"></i>
