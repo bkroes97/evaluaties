@@ -6,6 +6,7 @@
   <title>Avondevaluatie</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -1157,7 +1158,18 @@ async function handleUrenUpload(file) {
             role: 'user',
             content: [
               { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-              { type: 'text', text: 'Lees de urenlijst uit deze afbeelding. Geef ALLEEN een JSON array terug met de medewerkers, geen uitleg:\n[{"naam":"Jan de Vries","begin":"22:00","eind":"03:00","pauze":"30"}]\nAls een veld niet leesbaar is, gebruik dan null.' }
+              { type: 'text', text: `Lees de urenlijst uit deze afbeelding nauwkeurig uit. Dit is een nachtclub urenlijst met namen van medewerkers en hun werktijden.
+
+Geef ALLEEN een JSON array terug, geen uitleg, geen markdown:
+[{"naam":"Jan de Vries","functie":"bar","begin":"22:00","eind":"03:00","pauze":"30"}]
+
+Regels:
+- Lees alle namen voor, ook moeilijk leesbaar handschrift
+- Tijden altijd in HH:MM formaat (bijv. 22:00, 03:30)
+- Pauze in minuten als getal (bijv. 30)
+- Functie optioneel (bar, deur, etc.)
+- Als iets niet leesbaar is: gebruik null
+- Begin direct met [ zonder uitleg` }
             ]
           }]
         },
@@ -1278,44 +1290,113 @@ function fileToBase64(file) {
 
 function downloadUrenExcel() {
   if (!urenlijstData?.gegevens?.length) return;
-  const datum  = document.getElementById('datum').value || 'datum';
-  const locatie = document.getElementById('locatie').value || 'locatie';
+  const datum   = document.getElementById('datum').value || '';
+  const locatie = document.getElementById('locatie').value || '';
+  const datumNl = datum ? new Date(datum).toLocaleDateString('nl-NL', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
 
   const wb = XLSX.utils.book_new();
-  const headers = ['Naam', 'Begintijd', 'Eindtijd', 'Pauze (min)', 'Gewerkte uren'];
-  const rows = urenlijstData.gegevens.map(r => {
-    const begin = r.begin || '';
-    const eind  = r.eind  || '';
-    const pauze = parseInt(r.pauze) || 0;
-    // Bereken gewerkte uren als formule
-    return [r.naam || '', begin, eind, pauze, ''];
+
+  // Kopregel met locatie en datum
+  const wsData = [
+    [`Urenlijst — ${locatie}`, '', '', '', ''],
+    [datumNl, '', '', '', ''],
+    [],
+    ['Naam', 'Functie', 'Begintijd', 'Eindtijd', 'Pauze (min)'],
+  ];
+
+  urenlijstData.gegevens.forEach(r => {
+    wsData.push([
+      r.naam     || '',
+      r.functie  || '',
+      r.begin    || '',
+      r.eind     || '',
+      r.pauze !== null && r.pauze !== undefined ? String(r.pauze) : ''
+    ]);
   });
 
-  const wsData = [headers, ...rows];
-  // Voeg totaalrij toe
-  wsData.push(['Totaal', '', '', `=SUM(D2:D${rows.length + 1})`, '']);
+  // Totaalrij
+  const dataStart = 5;
+  const dataEind  = dataStart + urenlijstData.gegevens.length - 1;
+  wsData.push(['Totaal', '', '', '', `=SUM(E${dataStart}:E${dataEind})`]);
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);
 
+  // Opmaak: kopregel vet en groter
+  if (!ws['!merges']) ws['!merges'] = [];
+  ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }); // Merge rij 1
+  ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }); // Merge rij 2
+
   // Kolombreedte
-  ws['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 16 }];
+  ws['!cols'] = [{ wch: 25 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 14 }];
 
   XLSX.utils.book_append_sheet(wb, ws, 'Urenlijst');
-  XLSX.writeFile(wb, `urenlijst-${locatie}-${datum}.xlsx`);
+  const bestandsnaam = [locatie, datum].filter(Boolean).join('-').replace(/\s+/g, '_');
+  XLSX.writeFile(wb, `urenlijst-${bestandsnaam}.xlsx`);
 }
 
 function bewerkUren() {
   if (!urenlijstData?.gegevens) return;
-  // Simpele edit: toon een textarea met JSON
-  const tekst = JSON.stringify(urenlijstData.gegevens, null, 2);
-  const nieuw = prompt('Bewerk de urengegevens (JSON):', tekst);
-  if (!nieuw) return;
-  try {
-    urenlijstData.gegevens = JSON.parse(nieuw);
-    renderUrenPreview(urenlijstData.gegevens, urenlijstData.file?.name || 'urenlijst');
-  } catch(e) {
-    alert('Ongeldige JSON');
-  }
+  const gegevens = urenlijstData.gegevens;
+
+  // Bouw een inline tabel-editor
+  const preview = document.getElementById('urenPreview');
+  const bestandsnaam = urenlijstData.file?.name || 'urenlijst';
+
+  let editorHtml = `<div style="margin-top:10px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+    <div style="padding:10px 12px;background:var(--bg2);border-bottom:0.5px solid var(--border);font-size:12px;font-weight:500;color:var(--text2);">Urenlijst bewerken</div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:var(--bg2);">
+        <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--text3);font-weight:500;border-bottom:0.5px solid var(--border);">Naam</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--text3);font-weight:500;border-bottom:0.5px solid var(--border);">Functie</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--text3);font-weight:500;border-bottom:0.5px solid var(--border);">Begin</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--text3);font-weight:500;border-bottom:0.5px solid var(--border);">Eind</th>
+        <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--text3);font-weight:500;border-bottom:0.5px solid var(--border);">Pauze</th>
+        <th style="padding:8px 10px;border-bottom:0.5px solid var(--border);"></th>
+      </tr></thead>
+      <tbody id="urenTabelBody">`;
+
+  gegevens.forEach((r, i) => {
+    editorHtml += `<tr>
+      <td style="padding:4px 6px;border-bottom:0.5px solid var(--border);"><input value="${r.naam||''}" oninput="updateUrenRij(${i},'naam',this.value)" style="width:100%;font-family:inherit;font-size:12px;padding:4px 6px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text);min-width:100px;" /></td>
+      <td style="padding:4px 6px;border-bottom:0.5px solid var(--border);"><input value="${r.functie||''}" oninput="updateUrenRij(${i},'functie',this.value)" style="width:100%;font-family:inherit;font-size:12px;padding:4px 6px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text);min-width:60px;" /></td>
+      <td style="padding:4px 6px;border-bottom:0.5px solid var(--border);"><input value="${r.begin||''}" oninput="updateUrenRij(${i},'begin',this.value)" style="width:70px;font-family:inherit;font-size:12px;padding:4px 6px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text);" /></td>
+      <td style="padding:4px 6px;border-bottom:0.5px solid var(--border);"><input value="${r.eind||''}" oninput="updateUrenRij(${i},'eind',this.value)" style="width:70px;font-family:inherit;font-size:12px;padding:4px 6px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text);" /></td>
+      <td style="padding:4px 6px;border-bottom:0.5px solid var(--border);"><input value="${r.pauze||''}" oninput="updateUrenRij(${i},'pauze',this.value)" style="width:55px;font-family:inherit;font-size:12px;padding:4px 6px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text);" /></td>
+      <td style="padding:4px 6px;border-bottom:0.5px solid var(--border);text-align:center;"><span onclick="verwijderUrenRij(${i})" style="cursor:pointer;color:var(--text3);font-size:14px;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'"><i class="ti ti-x"></i></span></td>
+    </tr>`;
+  });
+
+  editorHtml += `</tbody></table></div>
+    <div style="padding:10px 12px;display:flex;gap:8px;border-top:0.5px solid var(--border);flex-wrap:wrap;">
+      <button class="btn" onclick="voegUrenRijToe()" style="font-size:12px;padding:5px 10px;"><i class="ti ti-plus"></i> Rij toevoegen</button>
+      <button class="btn" onclick="slaUrenEditorOp('${bestandsnaam}')" style="font-size:12px;padding:5px 10px;background:var(--green-bg);color:var(--green-text);border-color:var(--green-text);"><i class="ti ti-check"></i> Gereed</button>
+    </div>
+  </div>`;
+
+  // Vervang preview met editor
+  const huidig = preview.innerHTML;
+  preview.setAttribute('data-preview', huidig);
+  preview.innerHTML = editorHtml;
+}
+
+function updateUrenRij(i, veld, waarde) {
+  if (urenlijstData?.gegevens?.[i]) urenlijstData.gegevens[i][veld] = waarde;
+}
+
+function verwijderUrenRij(i) {
+  urenlijstData.gegevens.splice(i, 1);
+  bewerkUren();
+}
+
+function voegUrenRijToe() {
+  if (!urenlijstData) urenlijstData = { gegevens: [] };
+  urenlijstData.gegevens.push({ naam: '', functie: '', begin: '', eind: '', pauze: '' });
+  bewerkUren();
+}
+
+function slaUrenEditorOp(bestandsnaam) {
+  renderUrenPreview(urenlijstData.gegevens, bestandsnaam);
 }
 
 // ── Auth ──
