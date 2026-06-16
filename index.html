@@ -195,10 +195,10 @@
 
   <!-- Bijlagen sectie -->
   <div class="bijlagen-card">
-    <div class="bijlagen-title"><i class="ti ti-paperclip" style="font-size:15px;"></i> Bijlagen</div>
+    <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:6px;"><i class="ti ti-paperclip" style="font-size:14px;color:var(--text2);"></i> Bijlagen</div>
 
     <div class="bijlagen-sectie">
-      <div class="bijlagen-sectie-label"><i class="ti ti-clock" aria-hidden="true"></i> Urenlijst</div>
+      <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;display:flex;align-items:center;gap:5px;"><i class="ti ti-clock" style="font-size:12px;"></i> Urenlijst</div>
       <input type="file" id="urenInput" accept="image/*,.pdf" onchange="handleUrenUpload(this.files[0])" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />
       <div id="urenUploadZone" onclick="document.getElementById('urenInput').click()" ondragover="onDragOverUpload(event,'urenUploadZone')" ondragleave="onDragLeaveUpload('urenUploadZone')" ondrop="onDropUpload(event,'uren')" style="display:flex;align-items:center;gap:14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;cursor:pointer;transition:all 0.15s;">
         <div style="width:42px;height:42px;border-radius:var(--radius);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text2);flex-shrink:0;"><i class="ti ti-camera"></i></div>
@@ -212,7 +212,7 @@
     </div>
 
     <div class="bijlagen-sectie">
-      <div class="bijlagen-sectie-label"><i class="ti ti-paperclip" aria-hidden="true"></i> Losse bijlagen</div>
+      <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;display:flex;align-items:center;gap:5px;"><i class="ti ti-paperclip" style="font-size:12px;"></i> Losse bijlagen</div>
       <input type="file" id="bijlagenInput" accept="image/*,.pdf,.doc,.docx,.txt" multiple onchange="handleBijlagenUpload(this.files)" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />
       <div id="bijlagenUploadZone" onclick="document.getElementById('bijlagenInput').click()" ondragover="onDragOverUpload(event,'bijlagenUploadZone')" ondragleave="onDragLeaveUpload('bijlagenUploadZone')" ondrop="onDropUpload(event,'bijlage')" style="display:flex;align-items:center;gap:14px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;cursor:pointer;transition:all 0.15s;">
         <div style="width:42px;height:42px;border-radius:var(--radius);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text2);flex-shrink:0;"><i class="ti ti-paperclip"></i></div>
