@@ -25,9 +25,9 @@
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
     .ko-page { max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem; }
     .hero { display: flex; align-items: center; gap: 1.75rem; margin-bottom: 2.5rem; }
-    .orb-wrap { position: relative; width: 100px; height: 110px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
+    .orb-wrap { position: relative; width: 100px; height: 112px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
     canvas#orb { width: 100px; height: 100px; display: block; }
-    .orb-shadow { width: 70px; height: 10px; background: radial-gradient(ellipse, rgba(0,0,0,0.32) 0%, transparent 70%); border-radius: 50%; margin-top: 2px; }
+    .orb-shadow { width: 68px; height: 10px; background: radial-gradient(ellipse, rgba(0,0,0,0.35) 0%, transparent 70%); border-radius: 50%; margin-top: 2px; }
     .welkom-sub { font-size: 13px; color: var(--text3); margin-bottom: 4px; }
     .welkom h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
     .sectie-titel { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin: 2rem 0 10px; }
@@ -84,117 +84,126 @@
 
   let angle = 0, rafId;
 
-  function draw() {
+  function drawSphere() {
     angle += 0.007;
     ctx.clearRect(0, 0, S, S);
 
     const cosA = Math.cos(angle);
-    const isFront = cosA >= 0;
     const squeeze = Math.abs(cosA);
+    const isFront = cosA >= 0;
+    const logoSize = R * 1.72;
 
-    // ── Clip tot cirkel ──
+    // ── Clip tot bol ──
     ctx.save();
     ctx.beginPath();
     ctx.arc(CX, CY, R, 0, Math.PI * 2);
     ctx.clip();
 
-    // ── Achtergrond bol: donker glazig ──
-    // Basis donkere bol
-    const bgG = ctx.createRadialGradient(CX - 18, CY - 20, 4, CX, CY, R);
-    bgG.addColorStop(0,    '#2e2b22');
-    bgG.addColorStop(0.45, '#131109');
-    bgG.addColorStop(1,    '#030302');
+    // ── 1. Achtergrond: diepe donkere glazige sfeer ──
+    const bgG = ctx.createRadialGradient(CX - 22, CY - 25, 6, CX + 8, CY + 10, R * 1.1);
+    bgG.addColorStop(0,    '#2d2a1f');
+    bgG.addColorStop(0.35, '#141209');
+    bgG.addColorStop(0.75, '#080705');
+    bgG.addColorStop(1,    '#020201');
     ctx.fillStyle = bgG;
     ctx.fillRect(0, 0, S, S);
 
-    // ── Logo tekenen met horizontale squeeze (3D rotatie illusie) ──
-    const logoSize = R * 1.72;
+    // ── 2. Logo (voor- en achterkant, nooit gespiegeld) ──
     ctx.save();
     ctx.translate(CX, CY);
-    // Gespiegeld als we de achterkant zien (cosA < 0)
-    ctx.scale(isFront ? squeeze : -squeeze, 1);
-    // Fade achterkant iets donkerder maar zelfde logo
-    ctx.globalAlpha = isFront ? 1.0 : 0.78;
+    ctx.scale(squeeze, 1);  // squeeze zonder flip — zelfde richting voor/achter
+    ctx.globalAlpha = isFront ? 1.0 : 0.72;
     ctx.drawImage(logo, -logoSize / 2, -logoSize / 2, logoSize, logoSize);
     ctx.globalAlpha = 1.0;
     ctx.restore();
 
-    // ── Bol-curve shading: donkere rand om bol-effect te versterken ──
-    // Lichtbron links boven → rechterkant/onderkant donkerder
-    const sideShade = ctx.createRadialGradient(CX - R * 0.3, CY - R * 0.3, 0, CX, CY, R);
-    sideShade.addColorStop(0,    'rgba(0,0,0,0)');
-    sideShade.addColorStop(0.55, 'rgba(0,0,0,0.10)');
-    sideShade.addColorStop(0.80, 'rgba(0,0,0,0.40)');
-    sideShade.addColorStop(1,    'rgba(0,0,0,0.82)');
-    ctx.fillStyle = sideShade;
+    // ── 3. Bol-diepte: sterke radiale vignette ──
+    // Dit geeft de ronde 3D-bolkromming
+    const depth = ctx.createRadialGradient(CX, CY, R * 0.38, CX, CY, R * 1.02);
+    depth.addColorStop(0,    'rgba(0,0,0,0)');
+    depth.addColorStop(0.55, 'rgba(0,0,0,0.18)');
+    depth.addColorStop(0.80, 'rgba(0,0,0,0.55)');
+    depth.addColorStop(1,    'rgba(0,0,0,0.88)');
+    ctx.fillStyle = depth;
     ctx.fillRect(0, 0, S, S);
 
-    // Directional shading: rechts + onderkant extra donker (licht van linksboven)
-    const dirShade = ctx.createLinearGradient(CX - R, CY - R, CX + R, CY + R);
-    dirShade.addColorStop(0,   'rgba(255,255,255,0.04)');
-    dirShade.addColorStop(0.4, 'rgba(0,0,0,0)');
-    dirShade.addColorStop(1,   'rgba(0,0,0,0.38)');
-    ctx.fillStyle = dirShade;
+    // ── 4. Directionele belichting: licht van linksboven ──
+    // Linksbovenhoek lichter, rechtsonder donkerder
+    const dirLight = ctx.createLinearGradient(CX - R, CY - R, CX + R * 0.6, CY + R * 0.6);
+    dirLight.addColorStop(0,    'rgba(255,255,255,0.06)');
+    dirLight.addColorStop(0.35, 'rgba(0,0,0,0)');
+    dirLight.addColorStop(1,    'rgba(0,0,0,0.42)');
+    ctx.fillStyle = dirLight;
     ctx.fillRect(0, 0, S, S);
 
-    // ── Glasglans: grote zachte diffuse highlight ──
-    const glare1 = ctx.createRadialGradient(CX - 30, CY - 34, 0, CX - 10, CY - 14, R * 0.82);
-    glare1.addColorStop(0,    'rgba(255,255,255,0.36)');
-    glare1.addColorStop(0.18, 'rgba(255,255,255,0.13)');
-    glare1.addColorStop(0.5,  'rgba(255,255,255,0.03)');
-    glare1.addColorStop(1,    'rgba(255,255,255,0)');
-    ctx.fillStyle = glare1;
+    // ── 5. Grote diffuse glasglans linksboven ──
+    const glare = ctx.createRadialGradient(CX - 28, CY - 32, 0, CX - 8, CY - 10, R * 0.85);
+    glare.addColorStop(0,    'rgba(255,255,255,0.38)');
+    glare.addColorStop(0.15, 'rgba(255,255,255,0.14)');
+    glare.addColorStop(0.45, 'rgba(255,255,255,0.03)');
+    glare.addColorStop(1,    'rgba(255,255,255,0)');
+    ctx.fillStyle = glare;
     ctx.fillRect(0, 0, S, S);
 
-    // ── Kleine harde specular punt ──
-    const spec = ctx.createRadialGradient(CX - 32, CY - 35, 0, CX - 32, CY - 35, 15);
-    spec.addColorStop(0,    'rgba(255,255,255,0.92)');
-    spec.addColorStop(0.35, 'rgba(255,255,255,0.28)');
-    spec.addColorStop(1,    'rgba(255,255,255,0)');
-    ctx.fillStyle = spec;
+    // ── 6. Primaire harde specular spot ──
+    const spec1 = ctx.createRadialGradient(CX - 31, CY - 34, 0, CX - 31, CY - 34, 16);
+    spec1.addColorStop(0,    'rgba(255,255,255,0.95)');
+    spec1.addColorStop(0.30, 'rgba(255,255,255,0.35)');
+    spec1.addColorStop(0.65, 'rgba(255,255,255,0.06)');
+    spec1.addColorStop(1,    'rgba(255,255,255,0)');
+    ctx.fillStyle = spec1;
     ctx.fillRect(0, 0, S, S);
 
-    // ── Tweede kleinere specular (glazen tweede lichtpunt) ──
-    const spec2 = ctx.createRadialGradient(CX - 18, CY - 42, 0, CX - 18, CY - 42, 7);
-    spec2.addColorStop(0,   'rgba(255,255,255,0.55)');
+    // ── 7. Tweede kleine specular (glazen microglans) ──
+    const spec2 = ctx.createRadialGradient(CX - 16, CY - 44, 0, CX - 16, CY - 44, 7);
+    spec2.addColorStop(0,   'rgba(255,255,255,0.60)');
+    spec2.addColorStop(0.5, 'rgba(255,255,255,0.12)');
     spec2.addColorStop(1,   'rgba(255,255,255,0)');
     ctx.fillStyle = spec2;
     ctx.fillRect(0, 0, S, S);
 
-    // ── Warme rim-light onderin (reflectie van de grond) ──
-    const rim = ctx.createRadialGradient(CX, CY + R * 0.7, 0, CX, CY + R * 0.7, R * 0.65);
-    rim.addColorStop(0,   'rgba(200,168,88,0.22)');
-    rim.addColorStop(0.5, 'rgba(180,140,60,0.08)');
+    // ── 8. Warme amber rim-light onderin (alsof er een warme vloer onder is) ──
+    const rim = ctx.createRadialGradient(CX + 10, CY + R * 0.72, 0, CX + 10, CY + R * 0.72, R * 0.62);
+    rim.addColorStop(0,   'rgba(210,165,70,0.26)');
+    rim.addColorStop(0.5, 'rgba(180,130,50,0.09)');
     rim.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = rim;
     ctx.fillRect(0, 0, S, S);
 
-    ctx.restore(); // einde clip
+    // ── 9. Koele blauwe rand links (tweede lichtbron, geeft glazige sfeer) ──
+    const coolRim = ctx.createRadialGradient(CX - R * 0.9, CY, 0, CX - R * 0.9, CY, R * 0.5);
+    coolRim.addColorStop(0,   'rgba(160,190,230,0.14)');
+    coolRim.addColorStop(0.5, 'rgba(140,170,210,0.04)');
+    coolRim.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = coolRim;
+    ctx.fillRect(0, 0, S, S);
 
-    // ── Rand van de bol ──
+    ctx.restore(); // einde bol-clip
+
+    // ── 10. Dubbele rand: witte glans + donkere diepte ──
     ctx.save();
     ctx.beginPath();
     ctx.arc(CX, CY, R - 0.5, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255,255,255,0.16)';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
-    // Binnenste donkere rand voor diepte
+
     ctx.beginPath();
-    ctx.arc(CX, CY, R - 1.5, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    ctx.arc(CX, CY, R + 0.5, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,0,0,0.50)';
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.restore();
 
-    rafId = requestAnimationFrame(draw);
+    rafId = requestAnimationFrame(drawSphere);
   }
 
-  logo.onload  = draw;
-  logo.onerror = draw;
+  logo.onload  = drawSphere;
+  logo.onerror = drawSphere;
 
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) cancelAnimationFrame(rafId);
-    else draw();
+    else drawSphere();
   });
 })();
 </script>
