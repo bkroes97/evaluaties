@@ -170,12 +170,11 @@ async function init() {
     .single();
 
   if (!profiel?.goedgekeurd) { window.location.href = '/auth.html'; return; }
-  // naam wordt getoond via KONav
-  KONav.init({ module: 'Evaluaties', crumbs: [] });
 
+  // ✅ Kijker-check vóór KONav.init
   if (profiel.rol === 'kijker') { window.location.href = '/dashboard.html'; return; }
 
-  // Init navigatie
+  // ✅ KONav.init slechts één keer
   KONav.init({ module: 'Evaluaties', crumbs: [] });
 
   let locaties = [];
@@ -331,7 +330,6 @@ async function verwijderEval(id, event) {
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
-    // Verwijder uit lokale array
     actieveEvaluaties = actieveEvaluaties.filter(e => e.id !== id);
     renderEvaluaties();
   } catch(err) {
@@ -344,8 +342,6 @@ async function verwijderEval(id, event) {
 function escHtml(t) {
   return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-
-// uitloggen via KONav.logout()
 
 init();
 </script>
