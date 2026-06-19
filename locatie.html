@@ -215,6 +215,9 @@ async function openLocatie(naam, icon) {
   actieveLocatie = naam;
   filterJaar = ''; filterMaand = ''; filterDag = '';
 
+  // ✅ Broodkruimels updaten: Evaluaties → [Locatienaam]
+  KONav.updateCrumbs('Evaluaties', [{ label: naam }]);
+
   document.getElementById('stap1').style.display = 'none';
   document.getElementById('stap2').classList.add('show');
   document.getElementById('detailNaam').textContent = naam;
@@ -239,6 +242,8 @@ function terug() {
   document.getElementById('stap2').classList.remove('show');
   actieveLocatie = null;
   actieveEvaluaties = [];
+  // ✅ Broodkruimels terug naar alleen Evaluaties
+  KONav.updateCrumbs('Evaluaties', []);
 }
 
 function vulFilters() {
