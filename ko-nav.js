@@ -15,6 +15,9 @@ const KONav = {
   },
 
   _build(module, crumbs, accentColor) {
+    // ✅ Voorkom dubbele injectie
+    if (document.getElementById('ko-nav')) return;
+
     // Inject CSS
     if (!document.getElementById('ko-nav-style')) {
       const style = document.createElement('style');
