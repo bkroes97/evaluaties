@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KO-Company</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefed;
+      --text: #1a1a1a; --text2: #666660; --text3: #999993;
+      --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
+      --radius: 10px; --radius-lg: 14px;
+      --cream: #F5F0E8;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a18; --bg2: #242422; --bg3: #2c2c2a;
+        --text: #f0f0ee; --text2: #aaaaaa; --text3: #666660;
+        --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.16);
+        --cream: #2a2a28;
+      }
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+
+    /* Nav placeholder */
+    .ko-page { max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    /* Welkom */
+    .welkom { margin-bottom: 2rem; }
+    .welkom-sub { font-size: 13px; color: var(--text3); margin-top: 4px; }
+    .welkom h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
+
+    /* Module grid */
+    .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+
+    .module-kaart {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .module-kaart:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .module-kaart.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    .module-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .module-icon.eval { background: #eaf3de; color: #3b6d11; }
+    .module-icon.scan { background: #e6f1fb; color: #0c447c; }
+    .module-icon.soon { background: var(--bg2); color: var(--text3); }
+
+    .module-naam { font-size: 15px; font-weight: 500; }
+    .module-omschrijving { font-size: 12px; color: var(--text3); line-height: 1.5; }
+    .module-arrow { position: absolute; bottom: 1.25rem; right: 1.25rem; font-size: 16px; color: var(--text3); }
+    .module-badge {
+      position: absolute; top: 1rem; right: 1rem;
+      font-size: 10px; padding: 2px 8px; border-radius: 20px;
+      background: var(--bg2); color: var(--text3); font-weight: 500;
+    }
+    .module-badge.nieuw { background: #eaf3de; color: #3b6d11; }
+
+    /* Recente activiteit */
+    .sectie-titel { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin: 2rem 0 10px; }
+    .activiteit-lijst { display: flex; flex-direction: column; gap: 6px; }
+    .activiteit-item { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 14px; display: flex; align-items: center; gap: 12px; font-size: 13px; }
+    .activiteit-icon { font-size: 16px; color: var(--text3); flex-shrink: 0; }
+    .activiteit-tekst { flex: 1; color: var(--text2); }
+    .activiteit-tijd { font-size: 11px; color: var(--text3); white-space: nowrap; }
+
+    .spinner { width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 2rem auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .module-kaart { animation: fadein 0.2s ease both; }
+    .module-kaart:nth-child(2) { animation-delay: 0.05s; }
+    .module-kaart:nth-child(3) { animation-delay: 0.10s; }
+  </style>
+</head>
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/ko-nav.js"></script>
+
+<div class="ko-page">
+  <div class="welkom">
+    <div class="welkom-sub" id="welkomDag"></div>
+    <h2 id="welkomNaam">Welkom</h2>
+  </div>
+
+  <div class="sectie-titel">Modules</div>
+  <div class="module-grid" id="moduleGrid">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="sectie-titel">Recente activiteit</div>
+  <div class="activiteit-lijst" id="activiteitLijst">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<script>
+const _homeUrl  = 'https://gobqaidvirtadgpduznd.supabase.co';
+const _homeAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvYnFhaWR2aXJ0YWRncGR1em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTI0OTgsImV4cCI6MjA5NjY2ODQ5OH0.1e3jxFsGKaylTJCIvqZEP-m-F_j1Az1L06et9DP2rYo';
+var supabase = window.supabase.createClient(_homeUrl, _homeAnon);
+window._supabase = supabase;
+
+// Alle beschikbare modules
+const ALLE_MODULES = [
+  {
+    id: 'evaluaties',
+    naam: 'Evaluaties',
+    omschrijving: 'Avondevaluaties schrijven en beheren per locatie',
+    icon: 'ti-clipboard-text',
+    iconClass: 'eval',
+    href: '/locatie.html',
+    badge: null
+  },
+  {
+    id: 'pakbonnen',
+    naam: 'Pakbonnen',
+    omschrijving: 'Pakbonnen inscannen en verwerken',
+    icon: 'ti-scan',
+    iconClass: 'scan',
+    href: '/pakbonnen.html',
+    badge: 'Binnenkort',
+    locked: true
+  }
+];
+
+const DAG_NL = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+const MAAND_NL = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+
+async function init() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { window.location.href = '/auth.html'; return; }
+
+  const { data: profiel } = await supabase
+    .from('gebruikers')
+    .select('naam, rol, goedgekeurd')
+    .eq('id', session.user.id)
+    .single();
+
+  if (!profiel?.goedgekeurd) { window.location.href = '/auth.html'; return; }
+
+  // Welkom
+  const nu = new Date();
+  const uur = nu.getHours();
+  const dagdeel = uur < 12 ? 'Goedemorgen' : uur < 18 ? 'Goedemiddag' : 'Goedenavond';
+  const datumStr = `${DAG_NL[nu.getDay()]} ${nu.getDate()} ${MAAND_NL[nu.getMonth()]}`;
+  document.getElementById('welkomDag').textContent = `${dagdeel} — ${datumStr}`;
+  document.getElementById('welkomNaam').textContent = profiel.naam || 'Welkom';
+
+  // Init nav
+  KONav.init({ module: null, crumbs: [] });
+
+  // Modules tonen
+  renderModules(profiel.rol);
+
+  // Recente activiteit
+  laadActiviteit(session.access_token);
+}
+
+function renderModules(rol) {
+  const grid = document.getElementById('moduleGrid');
+  grid.innerHTML = '';
+
+  ALLE_MODULES.forEach((mod, i) => {
+    const kaart = document.createElement('a');
+    kaart.href = mod.locked ? '#' : mod.href;
+    kaart.className = 'module-kaart' + (mod.locked ? ' locked' : '');
+    kaart.style.animationDelay = (i * 0.05) + 's';
+    kaart.innerHTML = `
+      ${mod.badge ? `<span class="module-badge">${mod.badge}</span>` : ''}
+      <div class="module-icon ${mod.iconClass}"><i class="ti ${mod.icon}"></i></div>
+      <div>
+        <div class="module-naam">${mod.naam}</div>
+        <div class="module-omschrijving">${mod.omschrijving}</div>
+      </div>
+      ${!mod.locked ? '<i class="ti ti-arrow-right module-arrow"></i>' : ''}
+    `;
+    grid.appendChild(kaart);
+  });
+}
+
+async function laadActiviteit(token) {
+  try {
+    const res = await fetch('/.netlify/functions/evaluaties?limit=5', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    const lijst = document.getElementById('activiteitLijst');
+
+    if (!Array.isArray(data) || data.length === 0) {
+      lijst.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:10px 0;">Nog geen activiteit</div>';
+      return;
+    }
+
+    lijst.innerHTML = data.map(e => {
+      const isConcept = !e.evaluatie_tekst || e.status === 'concept';
+      const datum = e.datum ? new Date(e.datum).toLocaleDateString('nl-NL', { day:'numeric', month:'short' }) : '—';
+      return `<div class="activiteit-item">
+        <i class="ti ${isConcept ? 'ti-pencil' : 'ti-check'} activiteit-icon"></i>
+        <span class="activiteit-tekst">${e.locatie || '—'} — ${e.onderwerp || e.manager || '—'}</span>
+        <span class="activiteit-tijd">${datum}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('activiteitLijst').innerHTML = '';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
