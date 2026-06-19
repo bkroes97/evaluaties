@@ -24,42 +24,34 @@
     }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
     .ko-page { max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem; }
-
     .hero { display: flex; align-items: center; gap: 1.75rem; margin-bottom: 2.5rem; }
 
     .orb-wrap {
       position: relative;
-      width: 96px;
-      height: 96px;
+      width: 100px;
+      height: 100px;
       flex-shrink: 0;
     }
     .orb-wrap::after {
       content: '';
       position: absolute;
-      inset: -5px;
-      border-radius: 28px;
-      box-shadow: 0 0 24px 6px rgba(180,155,90,0.20), 0 0 48px 12px rgba(120,95,40,0.10);
-      animation: breathe 3.5s ease-in-out infinite;
-      pointer-events: none;
+      bottom: -12px; left: 50%;
+      transform: translateX(-50%);
+      width: 65px; height: 12px;
+      background: radial-gradient(ellipse, rgba(0,0,0,0.30) 0%, transparent 70%);
+      border-radius: 50%;
     }
-    @keyframes breathe {
-      0%,100% { opacity:.5; } 50% { opacity:1; }
-    }
-
-    canvas#orb {
-      width: 96px; height: 96px;
-      border-radius: 24px;
-      display: block;
-    }
+    canvas#orb { width: 100px; height: 100px; display: block; }
 
     .welkom-sub { font-size: 13px; color: var(--text3); margin-bottom: 4px; }
     .welkom h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
-
     .sectie-titel { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin: 2rem 0 10px; }
     .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-    .module-kaart { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; cursor: pointer; transition: all 0.15s; text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
+    .module-kaart { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; cursor: pointer; transition: all 0.15s; text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; animation: fadein 0.2s ease both; }
     .module-kaart:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
     .module-kaart.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+    .module-kaart:nth-child(2) { animation-delay: 0.05s; }
+    .module-kaart:nth-child(3) { animation-delay: 0.10s; }
     .module-icon { width: 44px; height: 44px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 20px; }
     .module-icon.eval { background: #eaf3de; color: #3b6d11; }
     .module-icon.scan { background: #e6f1fb; color: #0c447c; }
@@ -75,9 +67,6 @@
     .spinner { width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 2rem auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-    .module-kaart { animation: fadein 0.2s ease both; }
-    .module-kaart:nth-child(2) { animation-delay: 0.05s; }
-    .module-kaart:nth-child(3) { animation-delay: 0.10s; }
   </style>
 </head>
 <body>
@@ -85,7 +74,7 @@
 <div class="ko-page">
   <div class="hero">
     <div class="orb-wrap">
-      <canvas id="orb" width="192" height="192"></canvas>
+      <canvas id="orb" width="200" height="200"></canvas>
     </div>
     <div>
       <div class="welkom-sub" id="welkomDag"></div>
@@ -103,145 +92,122 @@
 (function () {
   const canvas = document.getElementById('orb');
   const ctx = canvas.getContext('2d');
-  const S = 192, CX = S / 2, CY = S / 2, RADIUS = 72, RR = 48;
+  const S = 200, CX = S / 2, CY = S / 2, R = 86;
 
-  // ── Laad logo in offscreen canvas ──
   const logo = new Image();
   logo.src = 'data:image/jpeg;base64,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';
 
-  // Offscreen: het logo 2× breed (voor naadloos wikkelen)
-  const off = document.createElement('canvas');
-  off.width = RADIUS * 2 * Math.PI * 2; // omtrek * 2 voor naadloos
-  off.height = RADIUS * 2;
-  const offCtx = off.getContext('2d');
+  let angle = 0, rafId;
 
-  let logoReady = false;
-  logo.onload = function () {
-    // Tegel het logo 2× naast elkaar zodat de naad onzichtbaar is
-    offCtx.drawImage(logo, 0, 0, off.width / 2, off.height);
-    offCtx.drawImage(logo, off.width / 2, 0, off.width / 2, off.height);
-    logoReady = true;
-    requestAnimationFrame(draw);
-  };
-  logo.onerror = function () {
-    logoReady = true;
-    requestAnimationFrame(draw);
-  };
-
-  let angle = 0;
-  let rafId;
-
-  function roundedClip(r) {
-    ctx.beginPath();
-    ctx.moveTo(r, 0); ctx.lineTo(S - r, 0);
-    ctx.arcTo(S, 0, S, r, r);
-    ctx.lineTo(S, S - r);
-    ctx.arcTo(S, S, S - r, S, r);
-    ctx.lineTo(r, S);
-    ctx.arcTo(0, S, 0, S - r, r);
-    ctx.lineTo(0, r);
-    ctx.arcTo(0, 0, r, 0, r);
-    ctx.closePath();
+  // Precompute per-pixel sphere depth + lighting (static)
+  // nz = z-component of surface normal, used for alpha + shading
+  const nzMap = new Float32Array(S * S);
+  for (let py = 0; py < S; py++) {
+    for (let px = 0; px < S; px++) {
+      const dx = (px - CX) / R, dy = (py - CY) / R;
+      const d2 = dx * dx + dy * dy;
+      if (d2 <= 1.0) {
+        nzMap[py * S + px] = Math.sqrt(1 - d2);
+      }
+    }
   }
 
   function draw() {
     angle += 0.007;
     ctx.clearRect(0, 0, S, S);
 
+    // ── 1. Clip tot cirkel ──
     ctx.save();
-    roundedClip(RR);
+    ctx.beginPath();
+    ctx.arc(CX, CY, R, 0, Math.PI * 2);
     ctx.clip();
 
-    // ── Achtergrond ──
-    const bgG = ctx.createRadialGradient(CX * 0.7, CY * 0.6, 0, CX, CY, S * 0.85);
-    bgG.addColorStop(0, '#1e1c17');
-    bgG.addColorStop(0.5, '#0d0c0a');
-    bgG.addColorStop(1, '#020201');
+    // ── 2. Achtergrond: diep glazig donker ──
+    const bgG = ctx.createRadialGradient(CX - 10, CY - 10, 0, CX, CY, R);
+    bgG.addColorStop(0,   '#2a2720');
+    bgG.addColorStop(0.5, '#161410');
+    bgG.addColorStop(1,   '#060504');
     ctx.fillStyle = bgG;
     ctx.fillRect(0, 0, S, S);
 
-    // ── Bol-projectie: wik het logo als een texture om een cirkel ──
-    if (logoReady && logo.complete && logo.naturalWidth > 0) {
-      // Sla cirkel-shape op
+    // ── 3. Roterende logo ──
+    // Schaal met cosinus: breed → smal → breed (alsof hij wegdraait)
+    const scaleX = Math.abs(Math.cos(angle));
+    const logoSize = R * 1.55; // iets groter dan bol zodat hij goed vult
+
+    ctx.save();
+    ctx.translate(CX, CY);
+    // Horizontale squeeze simuleert 3D rotatie
+    ctx.scale(scaleX, 1);
+    ctx.drawImage(logo, -logoSize / 2, -logoSize / 2, logoSize, logoSize);
+    ctx.restore();
+
+    // ── 4. Achterkant zichtbaar bij wegdraaien: zelfde logo, geflipte fase ──
+    // Als cos(angle) < 0: de achterkant (ook het logo, iets donkerder)
+    if (Math.cos(angle) < 0) {
+      const backScale = Math.abs(Math.cos(angle));
       ctx.save();
-      ctx.beginPath();
-      ctx.arc(CX, CY, RADIUS, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-
-      // Sphere mapping: voor elke kolom x bereken de verplaatsing op basis van hoek
-      // We tekenen het logo gescaled en verschoven — simpele cylindrische projectie
-      const texW = off.width / 2; // breedte van 1 logo-tegel
-      const offset = ((angle % (Math.PI * 2)) / (Math.PI * 2)) * texW;
-
-      // Teken de texture verschoven
-      ctx.drawImage(off,
-        offset, 0, texW, off.height,       // source
-        CX - RADIUS, CY - RADIUS, RADIUS * 2, RADIUS * 2  // dest
-      );
-
-      // Sphere-shading: donkerder aan randen (bol-effect)
-      const sphereShade = ctx.createRadialGradient(
-        CX - RADIUS * 0.2, CY - RADIUS * 0.2, 0,
-        CX, CY, RADIUS
-      );
-      sphereShade.addColorStop(0, 'rgba(0,0,0,0)');
-      sphereShade.addColorStop(0.6, 'rgba(0,0,0,0.25)');
-      sphereShade.addColorStop(1, 'rgba(0,0,0,0.82)');
-      ctx.fillStyle = sphereShade;
-      ctx.fillRect(CX - RADIUS, CY - RADIUS, RADIUS * 2, RADIUS * 2);
-
+      ctx.globalAlpha = 0.55;
+      ctx.translate(CX, CY);
+      ctx.scale(-backScale, 1); // gespiegeld
+      ctx.drawImage(logo, -logoSize / 2, -logoSize / 2, logoSize, logoSize);
+      ctx.globalAlpha = 1;
       ctx.restore();
     }
 
-    // ── Lichtreflectie linksboven (glazen glans) ──
-    const glare = ctx.createRadialGradient(CX - 28, CY - 26, 0, CX - 28, CY - 26, RADIUS * 0.55);
-    glare.addColorStop(0, 'rgba(255,252,240,0.55)');
-    glare.addColorStop(0.25, 'rgba(255,245,210,0.20)');
-    glare.addColorStop(0.6, 'rgba(255,235,180,0.05)');
-    glare.addColorStop(1, 'rgba(0,0,0,0)');
+    // ── 5. Bol-diepte shading: randen donkerder (geeft bol-gevoel) ──
+    const depthG = ctx.createRadialGradient(CX, CY, R * 0.3, CX, CY, R);
+    depthG.addColorStop(0,   'rgba(0,0,0,0)');
+    depthG.addColorStop(0.65,'rgba(0,0,0,0.15)');
+    depthG.addColorStop(1,   'rgba(0,0,0,0.75)');
+    ctx.fillStyle = depthG;
+    ctx.fillRect(0, 0, S, S);
+
+    // ── 6. Glasglans: grote zachte highlight linksboven ──
+    const glare = ctx.createRadialGradient(CX - 32, CY - 34, 0, CX - 16, CY - 18, R * 0.75);
+    glare.addColorStop(0,    'rgba(255,255,255,0.32)');
+    glare.addColorStop(0.2,  'rgba(255,255,255,0.10)');
+    glare.addColorStop(0.55, 'rgba(255,255,255,0.02)');
+    glare.addColorStop(1,    'rgba(255,255,255,0)');
     ctx.fillStyle = glare;
     ctx.fillRect(0, 0, S, S);
 
-    // ── Kleine scherpe highlight spot ──
-    const spot = ctx.createRadialGradient(CX - 22, CY - 20, 0, CX - 22, CY - 20, 18);
-    spot.addColorStop(0, 'rgba(255,255,255,0.85)');
-    spot.addColorStop(0.4, 'rgba(255,255,255,0.20)');
-    spot.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = spot;
+    // ── 7. Kleine harde specular spot ──
+    const spec = ctx.createRadialGradient(CX - 29, CY - 31, 0, CX - 29, CY - 31, 14);
+    spec.addColorStop(0,   'rgba(255,255,255,0.88)');
+    spec.addColorStop(0.4, 'rgba(255,255,255,0.25)');
+    spec.addColorStop(1,   'rgba(255,255,255,0)');
+    ctx.fillStyle = spec;
     ctx.fillRect(0, 0, S, S);
 
-    // ── Onderste rim-light (warm goud) ──
-    const rim = ctx.createRadialGradient(CX + 20, CY + 28, RADIUS * 0.5, CX, CY, RADIUS * 1.1);
-    rim.addColorStop(0, 'rgba(0,0,0,0)');
+    // ── 8. Warme rim onderaan ──
+    const rim = ctx.createRadialGradient(CX + 18, CY + 26, R * 0.55, CX + 18, CY + 26, R * 1.05);
+    rim.addColorStop(0,   'rgba(0,0,0,0)');
     rim.addColorStop(0.7, 'rgba(0,0,0,0)');
-    rim.addColorStop(1, 'rgba(180,140,60,0.18)');
+    rim.addColorStop(1,   'rgba(210,175,90,0.20)');
     ctx.fillStyle = rim;
-    ctx.fillRect(0, 0, S, S);
-
-    // ── Vignette (buiten de bol donker) ──
-    const vig = ctx.createRadialGradient(CX, CY, RADIUS * 0.5, CX, CY, S * 0.72);
-    vig.addColorStop(0, 'rgba(0,0,0,0)');
-    vig.addColorStop(1, 'rgba(0,0,0,0.88)');
-    ctx.fillStyle = vig;
     ctx.fillRect(0, 0, S, S);
 
     ctx.restore();
 
-    // ── Rand ──
+    // ── 9. Rand van de knikker ──
     ctx.save();
-    roundedClip(RR);
-    ctx.strokeStyle = 'rgba(210,185,120,0.20)';
-    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(CX, CY, R, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1.2;
     ctx.stroke();
     ctx.restore();
 
     rafId = requestAnimationFrame(draw);
   }
 
+  logo.onload  = function () { draw(); };
+  logo.onerror = function () { draw(); };
+
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) cancelAnimationFrame(rafId);
-    else { rafId = requestAnimationFrame(draw); }
+    else draw();
   });
 })();
 </script>
@@ -256,7 +222,6 @@ const ALLE_MODULES = [
   { id: 'evaluaties', naam: 'Evaluaties', omschrijving: 'Avondevaluaties schrijven en beheren per locatie', icon: 'ti-clipboard-text', iconClass: 'eval', href: '/locatie.html', badge: null },
   { id: 'pakbonnen', naam: 'Pakbonnen', omschrijving: 'Pakbonnen inscannen en verwerken', icon: 'ti-scan', iconClass: 'scan', href: '/pakbonnen.html', badge: 'Binnenkort', locked: true }
 ];
-
 const DAG_NL = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
 const MAAND_NL = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
 
@@ -265,13 +230,11 @@ async function init() {
   if (!session) { window.location.href = '/auth.html'; return; }
   const { data: profiel } = await supabase.from('gebruikers').select('naam, rol, goedgekeurd').eq('id', session.user.id).single();
   if (!profiel?.goedgekeurd) { window.location.href = '/auth.html'; return; }
-
   const nu = new Date();
   const uur = nu.getHours();
   const dagdeel = uur < 12 ? 'Goedemorgen' : uur < 18 ? 'Goedemiddag' : 'Goedenavond';
   document.getElementById('welkomDag').textContent = dagdeel + ' — ' + DAG_NL[nu.getDay()] + ' ' + nu.getDate() + ' ' + MAAND_NL[nu.getMonth()];
   document.getElementById('welkomNaam').textContent = profiel.naam || 'Welkom';
-
   KONav.init({ module: null, crumbs: [] });
   renderModules(profiel.rol);
   laadActiviteit(session.access_token);
