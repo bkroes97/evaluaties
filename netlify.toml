@@ -3,4 +3,4 @@
   functions = "netlify/functions"
 
 [build.environment]
-  SECRETS_SCAN_OMIT_PATHS = "auth.html,admin.html,auth-check.js,index.html,dashboard.html,locatie.html,netlify/functions/evaluaties.js"
+  SECRETS_SCAN_OMIT_PATHS = "auth.html,admin.html,auth-check.js,index.html,dashboard.html,locatie.html,netlify/functions/evaluaties.js,home.html,ko-nav.js"
