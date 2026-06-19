@@ -24,16 +24,111 @@
       }
     }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
-
-    /* Nav placeholder */
     .ko-page { max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem; }
 
-    /* Welkom */
-    .welkom { margin-bottom: 2rem; }
-    .welkom-sub { font-size: 13px; color: var(--text3); margin-top: 4px; }
+    /* ── Hero logo blok ── */
+    .hero {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo-orb-wrap {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      flex-shrink: 0;
+    }
+
+    .logo-box {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      background: radial-gradient(ellipse at 30% 25%, #2a2a2a 0%, #0a0a0a 60%, #000 100%);
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 0.5px rgba(255,255,255,0.08),
+        0 8px 32px rgba(0,0,0,0.45),
+        0 2px 8px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Achtergrond glans (statisch) */
+    .logo-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 25% 20%, rgba(255,255,255,0.07) 0%, transparent 55%);
+      border-radius: inherit;
+    }
+
+    /* Logo afbeelding */
+    .logo-img {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      position: relative;
+      z-index: 2;
+      filter: brightness(0.92) contrast(1.05);
+    }
+
+    /* Glazen highlight — subtiele lichtstreep bovenin */
+    .logo-shine {
+      position: absolute;
+      top: 6px;
+      left: 10px;
+      width: 36px;
+      height: 14px;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.22) 0%, transparent 70%);
+      border-radius: 50%;
+      z-index: 3;
+      filter: blur(2px);
+      animation: shineMove 4s ease-in-out infinite;
+    }
+
+    /* Onderste glow */
+    .logo-glow {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      width: 22px;
+      height: 10px;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      z-index: 3;
+      filter: blur(3px);
+      animation: shineMove 4s ease-in-out infinite reverse;
+    }
+
+    @keyframes shineMove {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+      50% { transform: translate(3px, 2px) scale(1.08); opacity: 1; }
+    }
+
+    /* Subtiele buitenste glow onder het blokje */
+    .logo-orb-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 16px;
+      background: radial-gradient(ellipse, rgba(0,0,0,0.25) 0%, transparent 70%);
+      filter: blur(4px);
+      z-index: -1;
+    }
+
+    .hero-tekst {}
+    .welkom-sub { font-size: 13px; color: var(--text3); margin-bottom: 4px; }
     .welkom h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
 
     /* Module grid */
+    .sectie-titel { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin: 2rem 0 10px; }
     .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 
     .module-kaart {
@@ -54,12 +149,7 @@
     .module-kaart:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
     .module-kaart.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
-    .module-icon {
-      width: 44px; height: 44px;
-      border-radius: var(--radius);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-    }
+    .module-icon { width: 44px; height: 44px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 20px; }
     .module-icon.eval { background: #eaf3de; color: #3b6d11; }
     .module-icon.scan { background: #e6f1fb; color: #0c447c; }
     .module-icon.soon { background: var(--bg2); color: var(--text3); }
@@ -67,15 +157,10 @@
     .module-naam { font-size: 15px; font-weight: 500; }
     .module-omschrijving { font-size: 12px; color: var(--text3); line-height: 1.5; }
     .module-arrow { position: absolute; bottom: 1.25rem; right: 1.25rem; font-size: 16px; color: var(--text3); }
-    .module-badge {
-      position: absolute; top: 1rem; right: 1rem;
-      font-size: 10px; padding: 2px 8px; border-radius: 20px;
-      background: var(--bg2); color: var(--text3); font-weight: 500;
-    }
+    .module-badge { position: absolute; top: 1rem; right: 1rem; font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--bg2); color: var(--text3); font-weight: 500; }
     .module-badge.nieuw { background: #eaf3de; color: #3b6d11; }
 
     /* Recente activiteit */
-    .sectie-titel { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin: 2rem 0 10px; }
     .activiteit-lijst { display: flex; flex-direction: column; gap: 6px; }
     .activiteit-item { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 14px; display: flex; align-items: center; gap: 12px; font-size: 13px; }
     .activiteit-icon { font-size: 16px; color: var(--text3); flex-shrink: 0; }
@@ -88,6 +173,10 @@
     .module-kaart { animation: fadein 0.2s ease both; }
     .module-kaart:nth-child(2) { animation-delay: 0.05s; }
     .module-kaart:nth-child(3) { animation-delay: 0.10s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .logo-shine, .logo-glow { animation: none; }
+    }
   </style>
 </head>
 <body>
@@ -96,9 +185,20 @@
 <script src="/ko-nav.js"></script>
 
 <div class="ko-page">
-  <div class="welkom">
-    <div class="welkom-sub" id="welkomDag"></div>
-    <h2 id="welkomNaam">Welkom</h2>
+
+  <!-- Hero: geanimeerd logo + welkomstekst -->
+  <div class="hero">
+    <div class="logo-orb-wrap">
+      <div class="logo-box">
+        <img class="logo-img" src="/KO_Logo1.png" alt="KO-Company" />
+        <div class="logo-shine"></div>
+        <div class="logo-glow"></div>
+      </div>
+    </div>
+    <div class="hero-tekst">
+      <div class="welkom-sub" id="welkomDag"></div>
+      <h2 id="welkomNaam">Welkom</h2>
+    </div>
   </div>
 
   <div class="sectie-titel">Modules</div>
@@ -118,7 +218,6 @@ const _homeAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 var supabase = window.supabase.createClient(_homeUrl, _homeAnon);
 window._supabase = supabase;
 
-// Alle beschikbare modules
 const ALLE_MODULES = [
   {
     id: 'evaluaties',
@@ -160,8 +259,8 @@ async function init() {
   const nu = new Date();
   const uur = nu.getHours();
   const dagdeel = uur < 12 ? 'Goedemorgen' : uur < 18 ? 'Goedemiddag' : 'Goedenavond';
-  const datumStr = `${DAG_NL[nu.getDay()]} ${nu.getDate()} ${MAAND_NL[nu.getMonth()]}`;
-  document.getElementById('welkomDag').textContent = `${dagdeel} — ${datumStr}`;
+  const datumStr = DAG_NL[nu.getDay()] + ' ' + nu.getDate() + ' ' + MAAND_NL[nu.getMonth()];
+  document.getElementById('welkomDag').textContent = dagdeel + ' — ' + datumStr;
   document.getElementById('welkomNaam').textContent = profiel.naam || 'Welkom';
 
   // Init nav
@@ -183,15 +282,11 @@ function renderModules(rol) {
     kaart.href = mod.locked ? '#' : mod.href;
     kaart.className = 'module-kaart' + (mod.locked ? ' locked' : '');
     kaart.style.animationDelay = (i * 0.05) + 's';
-    kaart.innerHTML = `
-      ${mod.badge ? `<span class="module-badge">${mod.badge}</span>` : ''}
-      <div class="module-icon ${mod.iconClass}"><i class="ti ${mod.icon}"></i></div>
-      <div>
-        <div class="module-naam">${mod.naam}</div>
-        <div class="module-omschrijving">${mod.omschrijving}</div>
-      </div>
-      ${!mod.locked ? '<i class="ti ti-arrow-right module-arrow"></i>' : ''}
-    `;
+    kaart.innerHTML =
+      (mod.badge ? '<span class="module-badge">' + mod.badge + '</span>' : '') +
+      '<div class="module-icon ' + mod.iconClass + '"><i class="ti ' + mod.icon + '"></i></div>' +
+      '<div><div class="module-naam">' + mod.naam + '</div><div class="module-omschrijving">' + mod.omschrijving + '</div></div>' +
+      (!mod.locked ? '<i class="ti ti-arrow-right module-arrow"></i>' : '');
     grid.appendChild(kaart);
   });
 }
@@ -199,7 +294,7 @@ function renderModules(rol) {
 async function laadActiviteit(token) {
   try {
     const res = await fetch('/.netlify/functions/evaluaties?limit=5', {
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': 'Bearer ' + token }
     });
     const data = await res.json();
     const lijst = document.getElementById('activiteitLijst');
@@ -209,14 +304,14 @@ async function laadActiviteit(token) {
       return;
     }
 
-    lijst.innerHTML = data.map(e => {
+    lijst.innerHTML = data.map(function(e) {
       const isConcept = !e.evaluatie_tekst || e.status === 'concept';
       const datum = e.datum ? new Date(e.datum).toLocaleDateString('nl-NL', { day:'numeric', month:'short' }) : '—';
-      return `<div class="activiteit-item">
-        <i class="ti ${isConcept ? 'ti-pencil' : 'ti-check'} activiteit-icon"></i>
-        <span class="activiteit-tekst">${e.locatie || '—'} — ${e.onderwerp || e.manager || '—'}</span>
-        <span class="activiteit-tijd">${datum}</span>
-      </div>`;
+      return '<div class="activiteit-item">' +
+        '<i class="ti ' + (isConcept ? 'ti-pencil' : 'ti-check') + ' activiteit-icon"></i>' +
+        '<span class="activiteit-tekst">' + (e.locatie || '—') + ' — ' + (e.onderwerp || e.manager || '—') + '</span>' +
+        '<span class="activiteit-tijd">' + datum + '</span>' +
+        '</div>';
     }).join('');
   } catch(e) {
     document.getElementById('activiteitLijst').innerHTML = '';
