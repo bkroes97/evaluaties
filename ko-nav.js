@@ -172,7 +172,7 @@ const KONav = {
     nav.innerHTML = `
       <a href="/home.html" class="ko-logo">
         <img src="/KO_Logo1.png" alt="KO-Company" onerror="this.style.display='none'" />
-        <span class="ko-logo-txt">KO</span>
+        <span class="ko-logo-txt">KO-Company</span>
       </a>
     `;
 
